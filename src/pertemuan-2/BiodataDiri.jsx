@@ -64,7 +64,7 @@ const PortfolioProjects = () => {
 };
 
 // Child 5: Komponen Academic yang menerima data NIM dan UNIV melalui OBJEK PROPS
-const Academic = (props) => (
+const Academic =  (props)=> (
     <div style={{ marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
         <div className="info-grid">
             <span>NIM</span>
