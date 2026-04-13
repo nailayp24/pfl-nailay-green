@@ -1,0 +1,322 @@
+[
+  {
+    "id": 1,
+    "name": "Keris Kamardikan",
+    "category": "Senjata",
+    "year": 1945,
+    "image": "/img/keris.jpg",
+    "origin": { "island": "Jawa", "city": "Solo", "dynasty": "Modern" },
+    "physical": {
+      "material": "Pamor Meteor",
+      "weight": "0.8kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Warisan", "Logam"]
+  },
+  {
+    "id": 2,
+    "name": "Arca Ganesha Batu",
+    "category": "Patung",
+    "year": 1200,
+    "image": "/img/arca.jpg",
+    "origin": {
+      "island": "Sumatera",
+      "city": "Palembang",
+      "dynasty": "Sriwijaya"
+    },
+    "physical": {
+      "material": "Batu Andesit",
+      "weight": "45kg",
+      "condition": "Rapuh"
+    },
+    "tags": ["Batu", "Religius"]
+  },
+  {
+    "id": 3,
+    "name": "Manuskrip Daun Lontar",
+    "category": "Dokumen",
+    "year": 1700,
+    "image": "/img/manuskrip.jpg",
+    "origin": { "island": "Bali", "city": "Ubud", "dynasty": "Klungkung" },
+    "physical": {
+      "material": "Daun Lontar",
+      "weight": "0.2kg",
+      "condition": "Butuh Restorasi"
+    },
+    "tags": ["Sastra", "Langka"]
+  },
+  {
+    "id": 4,
+    "name": "Koin Emas Kesultanan",
+    "category": "Numismatik",
+    "year": 1500,
+    "image": "/img/koin.jpg",
+    "origin": {
+      "island": "Sumatera",
+      "city": "Aceh",
+      "dynasty": "Samudera Pasai"
+    },
+    "physical": {
+      "material": "Emas 22K",
+      "weight": "0.01kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Ekonomi", "Emas"]
+  },
+  {
+    "id": 5,
+    "name": "Gong Perdamaian",
+    "category": "Alat Musik",
+    "year": 1900,
+    "image": "/img/gong.jpg",
+    "origin": { "island": "Maluku", "city": "Ambon", "dynasty": "Kolonial" },
+    "physical": {
+      "material": "Perunggu",
+      "weight": "12kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Budaya", "Perunggu"]
+  },
+  {
+    "id": 6,
+    "name": "Songket Melayu Kuno",
+    "category": "Tekstil",
+    "year": 1850,
+    "image": "/img/songket.jpg",
+    "origin": {
+      "island": "Riau",
+      "city": "Siak",
+      "dynasty": "Kesultanan Siak"
+    },
+    "physical": {
+      "material": "Sutra & Benang Emas",
+      "weight": "1.5kg",
+      "condition": "Rapuh"
+    },
+    "tags": ["Tenun", "Riau"]
+  },
+  {
+    "id": 7,
+    "name": "Topeng Panji",
+    "category": "Kesenian",
+    "year": 1920,
+    "image": "/img/topeng.jpg",
+    "origin": { "island": "Jawa", "city": "Cirebon", "dynasty": "Cirebonan" },
+    "physical": {
+      "material": "Kayu Kenanga",
+      "weight": "0.4kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Tari", "Kayu"]
+  },
+  {
+    "id": 8,
+    "name": "Piring Keramik Dinasti Ming",
+    "category": "Keramik",
+    "year": 1400,
+    "image": "/img/piring.jpg",
+    "origin": {
+      "island": "Luar Negeri",
+      "city": "Tiongkok",
+      "dynasty": "Ming"
+    },
+    "physical": {
+      "material": "Porselen",
+      "weight": "0.9kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Impor", "Porselen"]
+  },
+  {
+    "id": 9,
+    "name": "Wayang Kulit Purwa",
+    "category": "Kesenian",
+    "year": 1950,
+    "image": "/img/wayang.jpg",
+    "origin": { "island": "Jawa", "city": "Yogyakarta", "dynasty": "Mataram" },
+    "physical": {
+      "material": "Kulit Kerbau",
+      "weight": "0.3kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Pertunjukan", "Kulit"]
+  },
+  {
+    "id": 10,
+    "name": "Prasasti Mulawarman",
+    "category": "Dokumen",
+    "year": 400,
+    "image": "/img/prasasti.jpg",
+    "origin": {
+      "island": "Kalimantan",
+      "city": "Kutai",
+      "dynasty": "Kutai Martadipura"
+    },
+    "physical": {
+      "material": "Batu Yupa",
+      "weight": "80kg",
+      "condition": "Butuh Restorasi"
+    },
+    "tags": ["Sejarah", "Batu"]
+  },
+  {
+    "id": 11,
+    "name": "Rencong Emas",
+    "category": "Senjata",
+    "year": 1800,
+    "image": "/img/rencong.jpg",
+    "origin": {
+      "island": "Sumatera",
+      "city": "Aceh",
+      "dynasty": "Kesultanan Aceh"
+    },
+    "physical": {
+      "material": "Baja & Gading",
+      "weight": "0.6kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Heroik", "Aceh"]
+  },
+  {
+    "id": 12,
+    "name": "Patung Asmat",
+    "category": "Patung",
+    "year": 1960,
+    "image": "/img/patung.jpg",
+    "origin": { "island": "Papua", "city": "Agats", "dynasty": "Suku Asmat" },
+    "physical": {
+      "material": "Kayu Besi",
+      "weight": "5kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Etnik", "Kayu"]
+  },
+  {
+    "id": 13,
+    "name": "Naskah Proklamasi",
+    "category": "Dokumen",
+    "year": 1945,
+    "image": "/img/naskah.jpg",
+    "origin": { "island": "Jawa", "city": "Jakarta", "dynasty": "Republik" },
+    "physical": {
+      "material": "Kertas",
+      "weight": "0.01kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Nasional", "Kertas"]
+  },
+  {
+    "id": 14,
+    "name": "Mata Uang Gobog",
+    "category": "Numismatik",
+    "year": 1300,
+    "image": "/img/matauang.jpg",
+    "origin": { "island": "Jawa", "city": "Trowulan", "dynasty": "Majapahit" },
+    "physical": {
+      "material": "Tembaga",
+      "weight": "0.05kg",
+      "condition": "Rapuh"
+    },
+    "tags": ["Majapahit", "Tembaga"]
+  },
+  {
+    "id": 15,
+    "name": "Kendi Air Tanah Liat",
+    "category": "Keramik",
+    "year": 1750,
+    "image": "/img/kendi.jpg",
+    "origin": {
+      "island": "Nusa Tenggara",
+      "city": "Lombok",
+      "dynasty": "Lokal"
+    },
+    "physical": {
+      "material": "Tanah Liat",
+      "weight": "2kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Tradisi", "Gerabah"]
+  },
+  {
+    "id": 16,
+    "name": "Badik Bugis",
+    "category": "Senjata",
+    "year": 1880,
+    "image": "/img/badik.jpg",
+    "origin": {
+      "island": "Sulawesi",
+      "city": "Makassar",
+      "dynasty": "Gowa-Tallo"
+    },
+    "physical": {
+      "material": "Baja Berpamor",
+      "weight": "0.5kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Brave", "Sulawesi"]
+  },
+  {
+    "id": 17,
+    "name": "Miniatur Kapal Pinisi",
+    "category": "Kesenian",
+    "year": 1970,
+    "image": "/img/miniatur.jpg",
+    "origin": {
+      "island": "Sulawesi",
+      "city": "Bulukumba",
+      "dynasty": "Modern"
+    },
+    "physical": {
+      "material": "Kayu Jati",
+      "weight": "3kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Maritim", "Kayu"]
+  },
+  {
+    "id": 18,
+    "name": "Batik Tulis Keraton",
+    "category": "Tekstil",
+    "year": 1900,
+    "image": "/img/batik.jpg",
+    "origin": { "island": "Jawa", "city": "Surakarta", "dynasty": "Kasunanan" },
+    "physical": {
+      "material": "Mori Sen",
+      "weight": "0.8kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Seni", "Jawa"]
+  },
+  {
+    "id": 19,
+    "name": "Pedang Syamsir",
+    "category": "Senjata",
+    "year": 1600,
+    "image": "/img/pedang.jpg",
+    "origin": {
+      "island": "Sumatera",
+      "city": "Palembang",
+      "dynasty": "Kesultanan"
+    },
+    "physical": {
+      "material": "Baja Damaskus",
+      "weight": "1.2kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Perang", "Logam"]
+  },
+  {
+    "id": 20,
+    "name": "Patung Budha Amitabha",
+    "category": "Patung",
+    "year": 800,
+    "image": "/img/patungbu.jpg",
+    "origin": { "island": "Jawa", "city": "Magelang", "dynasty": "Syailendra" },
+    "physical": {
+      "material": "Batu Andesit",
+      "weight": "120kg",
+      "condition": "Sangat Baik"
+    },
+    "tags": ["Budha", "Andesit"]
+  }
+]
