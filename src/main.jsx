@@ -1,12 +1,13 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-
-import PendaftaranKursus from "./pertemuan-3/CoffeeMemberForm.jsx"
-import "./pertemuan-3/index.css"
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from "react-router-dom";
+import App from './App.jsx';
+import "./assets/tailwind.css";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <PendaftaranKursus />
-  </StrictMode>,
-)
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </StrictMode>
+);
