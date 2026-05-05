@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+:root {
+  /* Color Palette Sesuai Laporan [cite: 2] */
+  --s1-primary: #DEE33E;
+  --s2-secondary: #9FA324;
+  --s3-neutral-dark: #000000;
+  --s4-neutral-light: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+}
+
+body {
+  font-family: 'Outfit', sans-serif; /*  */
+  background-color: #F9FAFB;
+  color: var(--s3-neutral-dark);
+  margin: 0;
+}
+
+/* Typography Scale [cite: 3] */
+h1 {
+  font-size: 27px;
+  font-weight: 600; /* SemiBold */
+  line-height: normal;
+}
+
+.h2-title {
+  font-size: 20px;
+  font-weight: 600;
+}
