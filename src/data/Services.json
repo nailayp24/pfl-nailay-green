@@ -1,0 +1,147 @@
+[
+  {
+    "id": 1,
+    "orderId": "BG-00540",
+    "customerName": "Naila Putri",
+    "email": "nailaputri@gmail.com",
+    "vehicle": "Vario v22",
+    "plate": "BM 1234 NP",
+    "orderDate": "01 May 2026",
+    "status": "Paid",
+    "cost": 191589,
+    "mechanic": "Syarif Hidayat",
+    "problem": "Ganti Oli & Cek Rem",
+    "parts": [
+      {"name": "Oli MPX 2", "price": 55000},
+      {"name": "Kampas Rem Depan", "price": 85000},
+      {"name": "Jasa Service", "price": 51589}
+    ]
+  },
+  {
+    "id": 2,
+    "orderId": "BG-00541",
+    "customerName": "Naila Yohanda",
+    "email": "nailayohanda@gmail.com",
+    "vehicle": "NMAX Turbo",
+    "plate": "BM 5678 NY",
+    "orderDate": "03 May 2026",
+    "status": "Refunded",
+    "cost": 386226,
+    "mechanic": "Budi Santoso",
+    "problem": "Service CVT & Ganti Ban",
+    "parts": [
+      {"name": "Ban Luar Pirelli", "price": 300000},
+      {"name": "Grease CVT", "price": 20000},
+      {"name": "Jasa", "price": 66226}
+    ]
+  },
+  {
+    "id": 3,
+    "orderId": "BG-00542",
+    "customerName": "Ahmed",
+    "email": "ahmed@gmail.com",
+    "vehicle": "Vario v22",
+    "plate": "BM 9912 AD",
+    "orderDate": "02 May 2026",
+    "status": "Pending",
+    "cost": 149106,
+    "mechanic": "Agus Pratama",
+    "problem": "Lampu Depan Mati",
+    "parts": [
+      {"name": "Bohlam LED", "price": 95000},
+      {"name": "Jasa Pasang", "price": 54106}
+    ]
+  },
+  {
+    "id": 4,
+    "orderId": "BG-00543",
+    "customerName": "Setiawan",
+    "email": "setiawan@gmail.com",
+    "vehicle": "NMAX Turbo",
+    "plate": "BM 4432 ST",
+    "orderDate": "01 May 2026",
+    "status": "Paid",
+    "cost": 201048,
+    "mechanic": "Syarif Hidayat",
+    "problem": "Ganti Air Radiator",
+    "parts": [
+      {"name": "Coolant Honda", "price": 45000},
+      {"name": "Busi Iridium", "price": 95000},
+      {"name": "Jasa", "price": 61048}
+    ]
+  },
+  {
+    "id": 5,
+    "orderId": "BG-00544",
+    "customerName": "Sarah Johnson",
+    "email": "sarahjohnson@gmail.com",
+    "vehicle": "Vario v22",
+    "plate": "BM 1102 SJ",
+    "orderDate": "03 May 2026",
+    "status": "Refunded",
+    "cost": 85797,
+    "mechanic": "Budi Santoso",
+    "problem": "Stel Rantai/V-Belt",
+    "parts": [
+      {"name": "Jasa Pembersihan", "price": 85797}
+    ]
+  },
+  {
+    "id": 6,
+    "orderId": "BG-00545",
+    "customerName": "Michael Brown",
+    "email": "michaelbrown@gmail.com",
+    "vehicle": "NMAX Turbo",
+    "plate": "BM 8890 MB",
+    "orderDate": "01 May 2026",
+    "status": "Pending",
+    "cost": 168284,
+    "mechanic": "Agus Pratama",
+    "problem": "Ganti Aki",
+    "parts": [
+      {"name": "Aki GS Astra", "price": 120000},
+      {"name": "Jasa Pasang", "price": 48284}
+    ]
+  },
+  {
+    "id": 7,
+    "orderId": "BG-00546",
+    "customerName": "Putra Ramadhan",
+    "email": "putra@gmail.com",
+    "vehicle": "PCX 160",
+    "plate": "BM 2231 PR",
+    "orderDate": "04 May 2026",
+    "status": "Paid",
+    "cost": 450000,
+    "mechanic": "Syarif Hidayat",
+    "problem": "Service Lengkap",
+    "parts": [
+      {"name": "Oli SPX 2", "price": 65000},
+      {"name": "Filter Udara", "price": 75000},
+      {"name": "Jasa Injeksi", "price": 310000}
+    ]
+  },
+  { "id": 8, "orderId": "BG-00547", "customerName": "Dewi Lestari", "email": "dewi@gmail.com", "vehicle": "Beat Deluxe", "plate": "BM 7765 DL", "orderDate": "04 May 2026", "status": "Paid", "cost": 125000, "mechanic": "Agus Pratama", "problem": "Ganti Oli", "parts": [{"name": "Oli MPX 2", "price": 55000}, {"name": "Jasa", "price": 70000}] },
+  { "id": 9, "orderId": "BG-00548", "customerName": "Rian Adi", "email": "rian@gmail.com", "vehicle": "CBR 150R", "plate": "BM 9012 RA", "orderDate": "05 May 2026", "status": "Pending", "cost": 650000, "mechanic": "Budi Santoso", "problem": "Ganti Rantai Set", "parts": [{"name": "Rantai DID", "price": 500000}, {"name": "Jasa", "price": 150000}] },
+  { "id": 10, "orderId": "BG-00549", "customerName": "Anita", "email": "anita@gmail.com", "vehicle": "Scoopy", "plate": "BM 3341 AN", "orderDate": "05 May 2026", "status": "Paid", "cost": 210000, "mechanic": "Syarif Hidayat", "problem": "Cek Kelistrikan", "parts": [{"name": "Sikring", "price": 10000}, {"name": "Jasa", "price": 200000}] },
+  { "id": 11, "orderId": "BG-00550", "customerName": "Fajar", "email": "fajar@gmail.com", "vehicle": "Supra X", "plate": "BM 5567 FJ", "orderDate": "06 May 2026", "status": "Paid", "cost": 180000, "mechanic": "Agus Pratama", "problem": "Ganti Ban Dalam", "parts": [{"name": "Ban Dalam", "price": 50000}, {"name": "Jasa", "price": 130000}] },
+  { "id": 12, "orderId": "BG-00551", "customerName": "Bambang", "email": "bambang@gmail.com", "vehicle": "Vario 150", "plate": "BM 1122 BB", "orderDate": "06 May 2026", "status": "Pending", "cost": 320000, "mechanic": "Budi Santoso", "problem": "Ganti V-Belt", "parts": [{"name": "V-Belt Set", "price": 250000}, {"name": "Jasa", "price": 70000}] },
+  { "id": 13, "orderId": "BG-00552", "customerName": "Citra", "email": "citra@gmail.com", "vehicle": "Mio M3", "plate": "BM 8876 CI", "orderDate": "07 May 2026", "status": "Paid", "cost": 95000, "mechanic": "Syarif Hidayat", "problem": "Pompa Ban & Cek Rem", "parts": [{"name": "Jasa", "price": 95000}] },
+  { "id": 14, "orderId": "BG-00553", "customerName": "Eko", "email": "eko@gmail.com", "vehicle": "R15", "plate": "BM 4433 EK", "orderDate": "07 May 2026", "status": "Refunded", "cost": 1200000, "mechanic": "Budi Santoso", "problem": "Turun Mesin Ringan", "parts": [{"name": "Piston Set", "price": 800000}, {"name": "Jasa", "price": 400000}] },
+  { "id": 15, "orderId": "BG-00554", "customerName": "Gia", "email": "gia@gmail.com", "vehicle": "Fazzio", "plate": "BM 9900 GI", "orderDate": "08 May 2026", "status": "Paid", "cost": 155000, "mechanic": "Agus Pratama", "problem": "Service Rutin", "parts": [{"name": "Oli Yamalube", "price": 60000}, {"name": "Jasa", "price": 95000}] },
+  { "id": 16, "orderId": "BG-00555", "customerName": "Hadi", "email": "hadi@gmail.com", "vehicle": "XMAX", "plate": "BM 1010 HD", "orderDate": "08 May 2026", "status": "Pending", "cost": 450000, "mechanic": "Syarif Hidayat", "problem": "Ganti Kampas Belakang", "parts": [{"name": "Kampas Rem", "price": 350000}, {"name": "Jasa", "price": 100000}] },
+  { "id": 17, "orderId": "BG-00556", "customerName": "Indah", "email": "indah@gmail.com", "vehicle": "Genio", "plate": "BM 2021 IN", "orderDate": "09 May 2026", "status": "Paid", "cost": 110000, "mechanic": "Agus Pratama", "problem": "Ganti Busi", "parts": [{"name": "Busi Denso", "price": 30000}, {"name": "Jasa", "price": 80000}] },
+  { "id": 18, "orderId": "BG-00557", "customerName": "Joko", "email": "joko@gmail.com", "vehicle": "Jupiter Z", "plate": "BM 3033 JK", "orderDate": "09 May 2026", "status": "Paid", "cost": 275000, "mechanic": "Budi Santoso", "problem": "Ganti Gir Depan", "parts": [{"name": "Gir Depan", "price": 175000}, {"name": "Jasa", "price": 100000}] },
+  { "id": 19, "orderId": "BG-00558", "customerName": "Kiki", "email": "kiki@gmail.com", "vehicle": "Aerox", "plate": "BM 4044 KK", "orderDate": "10 May 2026", "status": "Pending", "cost": 550000, "mechanic": "Syarif Hidayat", "problem": "Modifikasi Lampu", "parts": [{"name": "Lampu Alis", "price": 350000}, {"name": "Jasa", "price": 200000}] },
+  { "id": 20, "orderId": "BG-00559", "customerName": "Lala", "email": "lala@gmail.com", "vehicle": "Vespa Sprint", "plate": "BM 5055 LL", "orderDate": "10 May 2026", "status": "Paid", "cost": 890000, "mechanic": "Budi Santoso", "problem": "Service Besar", "parts": [{"name": "Filter Oli", "price": 150000}, {"name": "Oli Eni", "price": 240000}, {"name": "Jasa", "price": 500000}] },
+  { "id": 21, "orderId": "BG-00560", "customerName": "Momon", "email": "momon@gmail.com", "vehicle": "Satria FU", "plate": "BM 6066 MM", "orderDate": "11 May 2026", "status": "Paid", "cost": 320000, "mechanic": "Agus Pratama", "problem": "Ganti Karburator", "parts": [{"name": "Karbu PE28", "price": 250000}, {"name": "Jasa", "price": 70000}] },
+  { "id": 22, "orderId": "BG-00561", "customerName": "Nana", "email": "nana@gmail.com", "vehicle": "NMAX New", "plate": "BM 7077 NN", "orderDate": "11 May 2026", "status": "Refunded", "cost": 150000, "mechanic": "Syarif Hidayat", "problem": "Cek Rem Bunyi", "parts": [{"name": "Jasa", "price": 150000}] },
+  { "id": 23, "orderId": "BG-00562", "customerName": "Oky", "email": "oky@gmail.com", "vehicle": "KLX 150", "plate": "BM 8088 OK", "orderDate": "12 May 2026", "status": "Pending", "cost": 450000, "mechanic": "Budi Santoso", "problem": "Ganti Kopling", "parts": [{"name": "Kampas Kopling", "price": 300000}, {"name": "Jasa", "price": 150000}] },
+  { "id": 24, "orderId": "BG-00563", "customerName": "Pandi", "email": "pandi@gmail.com", "vehicle": "RX King", "plate": "BM 9099 PA", "orderDate": "12 May 2026", "status": "Paid", "cost": 200000, "mechanic": "Agus Pratama", "problem": "Ganti Oli Samping", "parts": [{"name": "Oli Motul", "price": 150000}, {"name": "Jasa", "price": 50000}] },
+  { "id": 25, "orderId": "BG-00564", "customerName": "Qori", "email": "qori@gmail.com", "vehicle": "Adv 150", "plate": "BM 1111 QR", "orderDate": "13 May 2026", "status": "Paid", "cost": 380000, "mechanic": "Syarif Hidayat", "problem": "Pasang Crashbar", "parts": [{"name": "Crashbar", "price": 280000}, {"name": "Jasa", "price": 100000}] },
+  { "id": 26, "orderId": "BG-00565", "customerName": "Rara", "email": "rara@gmail.com", "vehicle": "Beat FI", "plate": "BM 2222 RR", "orderDate": "13 May 2026", "status": "Pending", "cost": 95000, "mechanic": "Agus Pratama", "problem": "Ganti Aki", "parts": [{"name": "Aki", "price": 95000}] },
+  { "id": 27, "orderId": "BG-00566", "customerName": "Sasa", "email": "sasa@gmail.com", "vehicle": "Vario 125", "plate": "BM 3333 SS", "orderDate": "14 May 2026", "status": "Paid", "cost": 240000, "mechanic": "Budi Santoso", "problem": "Ganti Ban Belakang", "parts": [{"name": "Ban FDR", "price": 190000}, {"name": "Jasa", "price": 50000}] },
+  { "id": 28, "orderId": "BG-00567", "customerName": "Tono", "email": "tono@gmail.com", "vehicle": "Sonic 150", "plate": "BM 4444 TO", "orderDate": "14 May 2026", "status": "Paid", "cost": 175000, "mechanic": "Syarif Hidayat", "problem": "Ganti Air Radiator", "parts": [{"name": "Coolant", "price": 50000}, {"name": "Jasa", "price": 125000}] },
+  { "id": 29, "orderId": "BG-00568", "customerName": "Uci", "email": "uci@gmail.com", "vehicle": "Filano", "plate": "BM 5555 UC", "orderDate": "15 May 2026", "status": "Pending", "cost": 130000, "mechanic": "Agus Pratama", "problem": "Cek Sensor", "parts": [{"name": "Jasa", "price": 130000}] },
+  { "id": 30, "orderId": "BG-00569", "customerName": "Vina", "email": "vina@gmail.com", "vehicle": "W175", "plate": "BM 6666 VI", "orderDate": "15 May 2026", "status": "Paid", "cost": 500000, "mechanic": "Budi Santoso", "problem": "Custom Knalpot", "parts": [{"name": "Glasswool", "price": 50000}, {"name": "Jasa Las", "price": 450000}] }
+]
