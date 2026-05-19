@@ -2,12 +2,10 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    // Menggunakan latar belakang transparan/terang agar menyatu dengan dashboard putih kamu
     <footer className="bg-transparent text-gray-600 py-10 mt-12 border-t border-gray-100 font-outfit">
       <div className="container mx-auto px-6 text-center">
         
         {/* Identitas BengkelGo */}
-        {/* PERBAIKAN: Mengubah warna kata "Bengkel" menjadi hitam pekat (text-gray-900 / text-black) */}
         <h2 className="text-2xl font-black mb-1 tracking-tight text-gray-900">
           Bengkel<span className="text-[#DEE33E]">Go</span>
         </h2>

@@ -2,7 +2,6 @@
 import React from 'react';
 
 export default function PageHeader({ title, breadcrumb, children }) {
-    // Handle breadcrumb yang bisa berupa string atau array
     const renderBreadcrumb = () => {
         if (Array.isArray(breadcrumb)) {
             return breadcrumb.join(" / ");
@@ -24,7 +23,7 @@ export default function PageHeader({ title, breadcrumb, children }) {
                     </span>
                 </div>
             </div>
-            {/* Pastikan children di-render di sini */}
+         
             {children && (
                 <div className="flex-shrink-0">
                     {children}
@@ -32,4 +31,4 @@ export default function PageHeader({ title, breadcrumb, children }) {
             )}
         </div>
     );
-}
+}   
