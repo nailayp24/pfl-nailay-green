@@ -9,9 +9,11 @@ const AuthLayout = lazy(() => import("./layouts/AuthLayout"));
 // Pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ServiceList = lazy(() => import("./pages/ServiceList"));
-const ServiceDetail = lazy(() => import("./pages/ServiceDetail")); // Tambahan Detail Page
+const ServiceDetail = lazy(() => import("./pages/ServiceDetail")); 
 const Mechanics = lazy(() => import("./pages/Mechanics"));
 const Coverage = lazy(() => import("./pages/Coverage"));
+const Components = lazy(() => import("./pages/Components")); 
+
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const Forgot = lazy(() => import("./pages/auth/Forgot"));
@@ -34,15 +36,19 @@ export default function App() {
           
           {/* Grouping Services */}
           <Route path="/services">
-            <Route index element={<ServiceList />} /> {/* Muncul di /services */}
-            <Route path=":id" element={<ServiceDetail />} /> {/* Muncul di /services/1 */}
+            <Route index element={<ServiceList />} /> 
+            <Route path=":id" element={<ServiceDetail />} /> 
           </Route>
 
-          {/* Menjaga agar link lama /active-services tetap jalan tapi pindah ke /services */}
           <Route path="/active-services" element={<Navigate to="/services" replace />} />
 
           <Route path="/mechanics" element={<Mechanics />} />
           <Route path="/coverage" element={<Coverage />} />
+          
+          {/* Rute Halaman Katalog 15 Komponen */}
+          <Route path="/components" element={<Components />} />
+
+          {/* Sisa Rute Wildcard Tunggal untuk 404 */}
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

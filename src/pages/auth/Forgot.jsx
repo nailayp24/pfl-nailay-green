@@ -1,18 +1,15 @@
 import { useState } from "react";
-import { BsEnvelope, BsFillExclamationDiamondFill, BsCheckCircleFill } from "react-icons/bs";
+import { BsCheckCircleFill } from "react-icons/bs";
 import { ImSpinner2 } from "react-icons/im";
 import { Link } from "react-router-dom";
 
 export default function Forgot() {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [email, setEmail] = useState("");
 
   const handleResetRequest = (e) => {
     e.preventDefault();
     setLoading(true);
-
-    // Simulasi pengiriman email reset password
     setTimeout(() => {
       setLoading(false);
       setEmailSent(true);
@@ -21,55 +18,46 @@ export default function Forgot() {
 
   return (
     <div className="w-full">
-      <h2 className="text-3xl font-black text-gray-800 mb-2">Forgot Password?</h2>
-      <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-        Jangan khawatir! Masukkan email Anda dan kami akan mengirimkan tautan untuk mengatur ulang kata sandi Anda.
-      </p>
-
       {emailSent ? (
-        <div className="bg-emerald-50 text-emerald-600 p-6 rounded-[30px] border border-emerald-100 text-center space-y-3">
-          <BsCheckCircleFill className="mx-auto text-3xl mb-2" />
-          <p className="font-bold">Email Terkirim!</p>
-          <p className="text-xs leading-relaxed text-emerald-500">
-            Kami telah mengirimkan instruksi pemulihan ke <b>{email}</b>. Silakan periksa kotak masuk atau folder spam Anda.
+        /* Sesuai dengan figma kotak nomor 6 (Sukses) */
+        <div className="text-center space-y-4 py-2">
+          <div className="w-12 h-12 bg-[#DEE33E]/10 rounded-full flex items-center justify-center mx-auto text-[#DEE33E] brightness-90">
+            <BsCheckCircleFill size={24} />
+          </div>
+          <h2 className="text-xl font-extrabold text-gray-800">Your successfully changed your password</h2>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Kata sandi akun Anda berhasil diperbarui. Silakan kembali menggunakan kredensial baru Anda.
           </p>
           <Link 
             to="/login" 
-            className="inline-block mt-4 text-xs font-black uppercase tracking-widest text-emerald-700 hover:underline"
+            className="block w-full bg-[#DEE33E] text-black font-bold py-3.5 rounded-2xl text-sm hover:bg-opacity-90 transition-all shadow-sm"
           >
             Back to Login
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleResetRequest} className="space-y-6">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 ml-1 uppercase tracking-widest">Email Address</label>
-            <div className="relative">
-              <input
-                type="email" 
-                required 
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-5 pr-12 text-sm focus:outline-none focus:border-[#FF8A00] transition-all shadow-sm"
-              />
-              <BsEnvelope className="absolute right-5 top-4.5 text-gray-400" />
-            </div>
-          </div>
+        /* Sesuai dengan figma kotak nomor 5 (Form Input Password Baru) */
+        <form onSubmit={handleResetRequest} className="space-y-4">
+          <h2 className="text-xl font-extrabold text-gray-800">Create new password</h2>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Please enter a new password. Your new password must be different from previous password.
+          </p>
+          
+          <input
+            type="password" required placeholder="New password"
+            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-4 text-sm focus:outline-none focus:border-black transition-all"
+          />
+          <input
+            type="password" required placeholder="Confirm new password"
+            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-4 text-sm focus:outline-none focus:border-black transition-all"
+          />
 
           <button
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-[#FF8A00] hover:bg-orange-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-200 transition-all flex justify-center items-center gap-2"
+            type="submit" disabled={loading}
+            className="w-full bg-[#DEE33E] hover:bg-opacity-90 text-black font-bold py-3.5 rounded-2xl shadow-sm transition-all flex justify-center items-center gap-2 text-sm pt-2"
           >
-            {loading ? <ImSpinner2 className="animate-spin text-lg" /> : "Send Reset Link"}
+            {loading ? <ImSpinner2 className="animate-spin text-md" /> : "Reset Password"}
           </button>
-
-          <div className="text-center mt-6">
-            <Link to="/login" className="text-xs font-bold text-gray-400 hover:text-[#FF8A00] transition-colors uppercase tracking-widest">
-              ← Back to Login
-            </Link>
-          </div>
         </form>
       )}
     </div>
