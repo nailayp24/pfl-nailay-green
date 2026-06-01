@@ -13,6 +13,7 @@ const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
 const Mechanics = lazy(() => import("./pages/Mechanics"));
 const Coverage = lazy(() => import("./pages/Coverage"));
 const Components = lazy(() => import("./pages/Components")); 
+const ServiceSimulation = lazy(() => import("./pages/ServiceSimulation")); // 🟢 IMPORT DI SINI
 
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
@@ -48,7 +49,10 @@ export default function App() {
           {/* Rute Halaman Katalog 15 Komponen */}
           <Route path="/components" element={<Components />} />
 
-          {/* Sisa Rute Wildcard Tunggal untuk 404 */}
+          {/* 🟢 RUTE BARU UNTUK HALAMAN SIMULASI BENGKEL */}
+          <Route path="/service-simulation" element={<ServiceSimulation />} />
+
+          {/* Sisa Rute Wildcard untuk 404 */}
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

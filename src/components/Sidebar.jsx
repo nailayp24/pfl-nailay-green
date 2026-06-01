@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
-// PERBAIKAN: Tambahkan FaList di dalam daftar import kurung kurawal ini
-import { FaThLarge, FaBox, FaWrench, FaUsers, FaUserFriends, FaSignOutAlt, FaList } from "react-icons/fa";
+// 🟢 MENAMBAHKAN FACOGS UNTUK IKON SIMULASI
+import { FaThLarge, FaBox, FaWrench, FaUsers, FaUserFriends, FaSignOutAlt, FaList, FaCogs } from "react-icons/fa";
 
 export default function Sidebar() {
   // Menggunakan skema warna aktif Lime Green figma kamu
@@ -51,6 +51,11 @@ export default function Sidebar() {
         {/* Menu Playground Components */}
         <NavLink to="/components" className={menuClass}>
           <FaList className="text-lg" /> Components
+        </NavLink>
+
+        {/* 🟢 MENU BARU BERTAUTAN KE HALAMAN SIMULASI */}
+        <NavLink to="/service-simulation" className={menuClass}>
+          <FaCogs className="text-lg" /> Simulation
         </NavLink>
       </nav>
 
