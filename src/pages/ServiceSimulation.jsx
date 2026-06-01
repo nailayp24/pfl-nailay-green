@@ -5,6 +5,9 @@ import PageHeader from "../components/PageHeader";
 export default function ServiceSimulation() {
   const [isAlertOpen, setIsAlertOpen] = useState(true);
   const [selectedMechanic, setSelectedMechanic] = useState("Belum Ditunjuk");
+  
+  // State React untuk mengatur baris accordion mana yang sedang terbuka
+  const [activeAccordion, setActiveAccordion] = useState(1);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] font-outfit pb-12">
@@ -16,7 +19,7 @@ export default function ServiceSimulation() {
         </p>
 
         {/* ==================================================================== */}
-        {/* KOMPONEN BARU 1: ALERT STATUS OPERASIONAL (DaisyUI - alert) */}
+        {/* KOMPONEN BARU 1: ALERT STATUS OPERASIONAL */}
         {/* ==================================================================== */}
         {isAlertOpen && (
           <div className="alert bg-[#DEE33E]/10 border border-[#DEE33E] text-black rounded-2xl flex justify-between p-4 mb-8 shadow-sm">
@@ -40,22 +43,20 @@ export default function ServiceSimulation() {
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">
               1. Dropdown: Assign Mechanic
             </h3>
-            <p className="text-xs text-gray-400 Lauren leading-relaxed">
+            <p className="text-xs text-gray-400 leading-relaxed">
               Alokasikan mekanik standby secara berkala ke dalam antrean pengerjaan unit berdasarkan jenis kendala motor matic pelanggan.
             </p>
             
-            {/* ==================================================================== */}
-            {/* KOMPONEN BARU 2: DROPDOWN MENU INTERAKTIF (DaisyUI - dropdown) */}
-            {/* ==================================================================== */}
+            {/* KOMPONEN BARU 2: DROPDOWN MENU INTERAKTIF */}
             <div className="dropdown w-full">
               <div tabIndex={0} role="button" className="btn btn-sm w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-gray-700 font-bold justify-between px-4 py-2 h-10 transition-all">
                 <span>Mekanik Tugas: {selectedMechanic}</span>
                 <span>▾</span>
               </div>
-              <ul tabIndex={0} className="dropdown-content mountaineer z-[1] menu p-2 shadow-xl bg-white rounded-xl w-full border border-gray-100 mt-1 text-xs font-bold text-gray-600">
-                <li><button type="button" onClick={() => setSelectedMechanic("Ahmad - Ahli Transmisi CVT")} className="py-2 hover:bg-gray-50 rounded-lg">Ahmad - Ahli Transmisi CVT</button></li>
-                <li><button type="button" onClick={() => setSelectedMechanic("Budi - Spesialis Kelistrikan")} className="py-2 hover:bg-gray-50 rounded-lg">Budi - Spesialis Kelistrikan</button></li>
-                <li><button type="button" onClick={() => setSelectedMechanic("Dedi - Mekanik Engine Overhaul")} className="py-2 hover:bg-gray-50 rounded-lg">Dedi - Mekanik Engine Overhaul</button></li>
+              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-white rounded-xl w-full border border-gray-100 mt-1 text-xs font-bold text-gray-600">
+                <li><button type="button" onClick={() => setSelectedMechanic("Ahmad - Ahli Transmisi CVT")} className="py-2 hover:bg-gray-50 rounded-lg text-left w-full">Ahmad - Ahli Transmisi CVT</button></li>
+                <li><button type="button" onClick={() => setSelectedMechanic("Budi - Spesialis Kelistrikan")} className="py-2 hover:bg-gray-50 rounded-lg text-left w-full">Budi - Spesialis Kelistrikan</button></li>
+                <li><button type="button" onClick={() => setSelectedMechanic("Dedi - Mekanik Engine Overhaul")} className="py-2 hover:bg-gray-50 rounded-lg text-left w-full">Dedi - Mekanik Engine Overhaul</button></li>
               </ul>
             </div>
           </div>
@@ -70,23 +71,46 @@ export default function ServiceSimulation() {
             </p>
 
             {/* ==================================================================== */}
-            {/* KOMPONEN BARU 3: ACCORDION COLLAPSE MENU (DaisyUI - collapse) */}
+            {/* KOMPONEN BARU 3: ACCORDION KUSTOM MURNI STATE (ANTI-ILANG) */}
             {/* ==================================================================== */}
             <div className="space-y-3">
-              <div className="collapse collapse-arrow bg-gray-50 border border-gray-100 rounded-xl text-gray-800">
-                <input type="radio" name="bengkel-accordion" defaultChecked />
-                <div className="collapse-title text-xs font-extrabold py-3">Kendala: Akselerasi gas motor tersendat / brebet?</div>
-                <div className="collapse-content text-xs text-gray-500">
-                  <p className="leading-relaxed pb-2">Lakukan pengecekan menyeluruh pada jalur tekanan injektor, kebersihan filter udara, serta ukur celah pengapian busi utama.</p>
-                </div>
+              
+              {/* ITEM ACCORDION 1 */}
+              <div className="bg-gray-50 border border-gray-100 rounded-xl overflow-hidden transition-all">
+                <button 
+                  type="button"
+                  onClick={() => setActiveAccordion(activeAccordion === 1 ? 0 : 1)}
+                  className="w-full flex justify-between items-center px-4 py-3 text-left text-xs font-extrabold text-gray-800 hover:bg-gray-100/50 transition-colors"
+                >
+                  <span>Kendala: Akselerasi gas motor tersendat / brebet?</span>
+                  <span className="text-gray-400 font-normal">{activeAccordion === 1 ? "▲" : "▼"}</span>
+                </button>
+                
+                {activeAccordion === 1 && (
+                  <div className="px-4 pb-4 pt-1 text-xs text-gray-500 border-t border-gray-100/60 bg-white">
+                    <p className="leading-relaxed">Lakukan pengecekan menyeluruh pada jalur tekanan injektor, kebersihan filter udara, serta ukur celah pengapian busi utama.</p>
+                  </div>
+                )}
               </div>
-              <div className="collapse collapse-arrow bg-gray-50 border border-gray-100 rounded-xl text-gray-800">
-                <input type="radio" name="bengkel-accordion" />
-                <div className="collapse-title text-xs font-extrabold py-3">Kendala: Suara mendesing atau berdecit pada blok CVT?</div>
-                <div className="collapse-content text-xs text-gray-500">
-                  <p className="leading-relaxed pb-2">Identifikasi ketebalan komponen roller dan cek tingkat keretakan v-belt. Bersihkan sisa gesekan lalu lumasi ulang menggunakan grease khusus CVT.</p>
-                </div>
+
+              {/* ITEM ACCORDION 2 */}
+              <div className="bg-gray-50 border border-gray-100 rounded-xl overflow-hidden transition-all">
+                <button 
+                  type="button"
+                  onClick={() => setActiveAccordion(activeAccordion === 2 ? 0 : 2)}
+                  className="w-full flex justify-between items-center px-4 py-3 text-left text-xs font-extrabold text-gray-800 hover:bg-gray-100/50 transition-colors"
+                >
+                  <span>Kendala: Suara mendesing atau berdecit pada blok CVT?</span>
+                  <span className="text-gray-400 font-normal">{activeAccordion === 2 ? "▲" : "▼"}</span>
+                </button>
+                
+                {activeAccordion === 2 && (
+                  <div className="px-4 pb-4 pt-1 text-xs text-gray-500 border-t border-gray-100/60 bg-white">
+                    <p className="leading-relaxed">Identifikasi ketebalan komponen roller dan cek tingkat keretakan v-belt. Bersihkan sisa gesekan lalu lumasi ulang menggunakan grease khusus CVT.</p>
+                  </div>
+                )}
               </div>
+
             </div>
 
           </div>
