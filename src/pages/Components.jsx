@@ -6,7 +6,7 @@ import Avatar from "../components/Avatar";
 import Container from "../components/Container";
 import Card from "../components/Card";
 import Table from "../components/Table";
-import Footer from "../components/Footer"; // Import footer bengkel yang sudah disesuaikan
+import Footer from "../components/Footer";
 
 export default function Components() {
   const headers = ["No", "Nama Produk", "Kategori", "Harga", "Aksi"];
@@ -17,41 +17,39 @@ export default function Components() {
   ];
 
   return (
-    <div id="playground-container" className="min-h-screen flex flex-col justify-between bg-[#F8F9FA] font-outfit">
-      
+    <div id="playground-container" className="min-h-screen bg-[#F8F9FA] font-outfit pb-12 flex flex-col justify-between">
       <Container className="flex-1">
-        {/* Menggunakan PageHeader asli bawaan project BengkelGo */}
-        <PageHeader title="Katalog Komponen" breadcrumb="Components" />
+        <PageHeader title="Katalog Suku Cadang" breadcrumb="Komponen" />
         <p className="text-sm text-gray-500 mb-8 -mt-4">
-          Halaman playground untuk memvalidasi variasi visual dari 15 komponen modular BengkelGo.
+          Lembar pengecekan variasi visual dan bentuk fisik komponen rakitan aplikasi BengkelGo.
         </p>
 
         <hr className="mb-8 border-gray-200" />
 
-        {/* SECTION 1: BASIC COMPONENTS */}
+        {/* BAGIAN 1: TOMBOL DAN PENANDA */}
         <section className="mb-10 space-y-4">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">1. Basic Components</h2>
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">1. Tombol &amp; Penanda Status</h2>
           <Card className="space-y-6">
             <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Buttons Variants</h3>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Pilihan Variasi Tombol</h3>
               <div className="flex gap-3 flex-wrap">
-                <Button type="primary">Simpan (Primary)</Button>
-                <Button type="secondary">Kembali (Secondary)</Button>
-                <Button type="danger">Hapus (Danger)</Button>
+                <Button type="primary">Simpan Data</Button>
+                <Button type="secondary">Kembali</Button>
+                <Button type="danger">Hapus</Button>
               </div>
             </div>
 
             <div className="border-t border-gray-50 pt-4">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Badges (Status Perbaikan)</h3>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Label Status Kendaraan</h3>
               <div className="flex gap-3">
-                <Badge type="success">Completed</Badge>
-                <Badge type="warning">Pending</Badge>
-                <Badge type="danger">Canceled</Badge>
+                <Badge type="success">Selesai</Badge>
+                <Badge type="warning">Antre</Badge>
+                <Badge type="danger">Batal</Badge>
               </div>
             </div>
 
             <div className="border-t border-gray-50 pt-4">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Avatars Group</h3>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Foto Identitas Montir</h3>
               <div className="flex gap-3">
                 <Avatar name="Naila" image="/img/naila.jpeg" />
                 <Avatar name="Andriana" />
@@ -61,21 +59,20 @@ export default function Components() {
           </Card>
         </section>
 
-        {/* SECTION 2: DATA DISPLAY - REUSABLE CARDS (BARU TAMBAH DI SINI) */}
+        {/* BAGIAN 2: KARTU DISPLAY MATERIAL */}
         <section className="mb-10 space-y-4">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">2. Data Display - Cards</h2>
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">2. Tampilan Kotak Informasi</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            {/* Contoh Card Pembungkus Data 1 */}
             <Card className="space-y-4">
               <div className="h-44 bg-gray-100 rounded-2xl overflow-hidden relative">
                 <img 
                   src="https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&q=80&w=600" 
-                  alt="Service Bengkel" 
+                  alt="Servis Berkala" 
                   className="w-full h-full object-cover"
                 />
                 <span className="absolute top-3 left-3 bg-[#DEE33E] text-black text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-                  Tune Up
+                  Paket Servis
                 </span>
               </div>
               <div>
@@ -90,12 +87,11 @@ export default function Components() {
               </div>
             </Card>
 
-            {/* Contoh Card Pembungkus Data 2 */}
             <Card className="space-y-4">
               <div className="h-44 bg-gray-100 rounded-2xl overflow-hidden relative">
                 <img 
                   src="https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=500" 
-                  alt="Sparepart Bengkel" 
+                  alt="Sparepart" 
                   className="w-full h-full object-cover"
                 />
                 <span className="absolute top-3 left-3 bg-[#DEE33E] text-black text-xs font-bold px-3 py-1 rounded-full shadow-sm">
@@ -117,9 +113,9 @@ export default function Components() {
           </div>
         </section>
 
-        {/* SECTION 3: DATA DISPLAY - TABLES */}
+        {/* BAGIAN 3: TABEL HARGA MATERIAL */}
         <section className="mb-10 space-y-4">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">3. Data Display - Tables</h2>
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">3. Tabel Suku Cadang</h2>
           <Card>
             <Table headers={headers}>
               {products.map((product, index) => (
@@ -141,10 +137,7 @@ export default function Components() {
           </Card>
         </section>
       </Container>
-
-      {/* FOOTER DI PALING BAWAH HALAMAN HIERARKI KANVAS (BARU TAMBAH DI SINI) */}
       <Footer />
-      
     </div>
   );
 }

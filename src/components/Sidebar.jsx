@@ -1,9 +1,7 @@
 import { NavLink } from "react-router-dom";
-// 🟢 MENAMBAHKAN FACOGS UNTUK IKON SIMULASI
-import { FaThLarge, FaBox, FaWrench, FaUsers, FaUserFriends, FaSignOutAlt, FaList, FaCogs } from "react-icons/fa";
+import { FaThLarge, FaBox, FaWrench, FaUsers, FaUserFriends, FaSignOutAlt, FaList, FaCogs, FaMapMarkedAlt } from "react-icons/fa";
 
 export default function Sidebar() {
-  // Menggunakan skema warna aktif Lime Green figma kamu
   const menuClass = ({ isActive }) =>
     `flex items-center gap-4 px-6 py-3 transition-all text-sm font-semibold rounded-2xl ${
       isActive 
@@ -14,7 +12,7 @@ export default function Sidebar() {
   return (
     <aside className="w-[256px] bg-white h-screen flex flex-col py-8 border-r border-gray-100 sticky top-0 font-outfit">
       
-      {/* Logo Section */}
+      {/* Logo */}
       <div className="px-8 mb-12 flex flex-col items-start gap-1">
         <div className="flex gap-1 mb-1">
           <div className="w-3 h-8 bg-[#DEE33E] rounded-full rotate-12"></div>
@@ -24,8 +22,8 @@ export default function Sidebar() {
         <span className="text-xl font-black text-gray-800 tracking-tight">BengkelGo</span>
       </div>
 
-      {/* Main Navigation */}
-      <nav className="flex-1 flex flex-col gap-2 px-4"> 
+      {/* Menu Navigasi */}
+      <nav className="flex-1 flex flex-col gap-2 px-4 overflow-y-auto"> 
         <p className="px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Main Menu</p>
         
         <NavLink to="/" className={menuClass}>
@@ -48,18 +46,20 @@ export default function Sidebar() {
           <FaUserFriends className="text-lg" /> Customers
         </NavLink>
 
-        {/* Menu Playground Components */}
+        <NavLink to="/coverage" className={menuClass}>
+          <FaMapMarkedAlt className="text-lg" /> Coverage Map
+        </NavLink>
+
         <NavLink to="/components" className={menuClass}>
           <FaList className="text-lg" /> Components
         </NavLink>
 
-        {/* 🟢 MENU BARU BERTAUTAN KE HALAMAN SIMULASI */}
         <NavLink to="/service-simulation" className={menuClass}>
           <FaCogs className="text-lg" /> Simulation
         </NavLink>
       </nav>
 
-      {/* Footer Sidebar */}
+      {/* Footer */}
       <div className="px-4 mt-auto">
         <button className="flex items-center gap-4 px-6 py-3 text-gray-400 hover:text-red-500 transition-all text-sm font-medium w-full">
           <FaSignOutAlt /> Logout

@@ -5,22 +5,17 @@ import PageHeader from "../components/PageHeader";
 export default function ServiceSimulation() {
   const [isAlertOpen, setIsAlertOpen] = useState(true);
   const [selectedMechanic, setSelectedMechanic] = useState("Belum Ditunjuk");
-  
-  // State React untuk mengatur baris accordion mana yang sedang terbuka
   const [activeAccordion, setActiveAccordion] = useState(1);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] font-outfit pb-12">
       <Container>
-        {/* PageHeader bawaan proyek BengkelGo */}
-        <PageHeader title="Service Simulation" breadcrumb="Dashboard / Simulation" />
+        <PageHeader title="Simulasi Penugasan" breadcrumb="Dashboard / Simulasi" />
         <p className="text-sm text-gray-500 mb-8 -mt-4">
           Sistem pusat kendali simulasi penugasan montir, alokasi antrean mekanik, dan panduan taktis operasional bengkel secara real-time.
         </p>
 
-        {/* ==================================================================== */}
-        {/* KOMPONEN BARU 1: ALERT STATUS OPERASIONAL */}
-        {/* ==================================================================== */}
+        {/* PEMBERITAHUAN BANNER UTAMA */}
         {isAlertOpen && (
           <div className="alert bg-[#DEE33E]/10 border border-[#DEE33E] text-black rounded-2xl flex justify-between p-4 mb-8 shadow-sm">
             <div className="flex items-center gap-3">
@@ -29,7 +24,7 @@ export default function ServiceSimulation() {
               </svg>
               <div>
                 <span className="font-extrabold text-sm block">Sistem Pemantauan Antrean Aktif</span>
-                <span className="text-xs text-gray-600">Pastikan status penugasan mekanik disesuaikan dengan kapasitas ruang kerja dan spesialisasi teknis masing-masing divisi.</span>
+                <span className="text-xs text-gray-600">Pastikan penunjukan montir disesuaikan dengan ketersediaan ruang pengerjaan dan keahlian divisi masing-masing.</span>
               </div>
             </div>
             <button onClick={() => setIsAlertOpen(false)} className="btn btn-xs btn-circle btn-ghost font-bold text-gray-700">✕</button>
@@ -38,19 +33,18 @@ export default function ServiceSimulation() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           
-          {/* SISI KIRI: DROPDOWN ASSIGNMENT MECHANIC */}
+          {/* PILIHAN DROPDOWN MONTIR */}
           <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm space-y-4">
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">
-              1. Dropdown: Assign Mechanic
+              1. Penunjukan Montir Bengkel
             </h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Alokasikan mekanik standby secara berkala ke dalam antrean pengerjaan unit berdasarkan jenis kendala motor matic pelanggan.
+              Alokasikan montir standby secara berkala ke dalam antrean pengerjaan unit berdasarkan jenis kendala motor matic pelanggan.
             </p>
             
-            {/* KOMPONEN BARU 2: DROPDOWN MENU INTERAKTIF */}
             <div className="dropdown w-full">
               <div tabIndex={0} role="button" className="btn btn-sm w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-gray-700 font-bold justify-between px-4 py-2 h-10 transition-all">
-                <span>Mekanik Tugas: {selectedMechanic}</span>
+                <span>Montir yang Bertugas: {selectedMechanic}</span>
                 <span>▾</span>
               </div>
               <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-white rounded-xl w-full border border-gray-100 mt-1 text-xs font-bold text-gray-600">
@@ -61,21 +55,17 @@ export default function ServiceSimulation() {
             </div>
           </div>
 
-          {/* SISI KANAN: ACCORDION MANAJEMEN TROUBLESHOOT */}
+          {/* DAFTAR ACCORDION PANDUAN KERUSAKAN */}
           <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm space-y-4">
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">
-              2. Accordion: Trouble Guides
+              2. Panduan Mengatasi Kendala Motor
             </h3>
             <p className="text-xs text-gray-400 leading-relaxed">
               Daftar referensi penanganan indikasi keluhan teknis darurat sebagai panduan standar operasional penanganan unit BengkelGo.
             </p>
 
-            {/* ==================================================================== */}
-            {/* KOMPONEN BARU 3: ACCORDION KUSTOM MURNI STATE (ANTI-ILANG) */}
-            {/* ==================================================================== */}
             <div className="space-y-3">
               
-              {/* ITEM ACCORDION 1 */}
               <div className="bg-gray-50 border border-gray-100 rounded-xl overflow-hidden transition-all">
                 <button 
                   type="button"
@@ -93,7 +83,6 @@ export default function ServiceSimulation() {
                 )}
               </div>
 
-              {/* ITEM ACCORDION 2 */}
               <div className="bg-gray-50 border border-gray-100 rounded-xl overflow-hidden transition-all">
                 <button 
                   type="button"
@@ -112,7 +101,6 @@ export default function ServiceSimulation() {
               </div>
 
             </div>
-
           </div>
 
         </div>

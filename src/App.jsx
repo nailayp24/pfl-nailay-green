@@ -6,15 +6,20 @@ import Loading from "./components/Loading";
 const MainLayout = lazy(() => import("./layouts/MainLayout"));
 const AuthLayout = lazy(() => import("./layouts/AuthLayout"));
 
-// Pages
+// Pages Core
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ServiceList = lazy(() => import("./pages/ServiceList"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail")); 
 const Mechanics = lazy(() => import("./pages/Mechanics"));
 const Coverage = lazy(() => import("./pages/Coverage"));
 const Components = lazy(() => import("./pages/Components")); 
-const ServiceSimulation = lazy(() => import("./pages/ServiceSimulation")); // 🟢 IMPORT DI SINI
+const ServiceSimulation = lazy(() => import("./pages/ServiceSimulation"));
 
+// Basis Data CRM Pages 
+const Inventory = lazy(() => import("./pages/Inventory"));
+const Customers = lazy(() => import("./pages/Customers"));
+
+// Auth Pages & Wildcard Wildcard
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const Forgot = lazy(() => import("./pages/auth/Forgot"));
@@ -45,12 +50,12 @@ export default function App() {
 
           <Route path="/mechanics" element={<Mechanics />} />
           <Route path="/coverage" element={<Coverage />} />
-          
-          {/* Rute Halaman Katalog 15 Komponen */}
           <Route path="/components" element={<Components />} />
 
-          {/* 🟢 RUTE BARU UNTUK HALAMAN SIMULASI BENGKEL */}
+          {/* Rute Basis Data CRM Bengkel */}
           <Route path="/service-simulation" element={<ServiceSimulation />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/customers" element={<Customers />} />
 
           {/* Sisa Rute Wildcard untuk 404 */}
           <Route path="*" element={<NotFound />} />
