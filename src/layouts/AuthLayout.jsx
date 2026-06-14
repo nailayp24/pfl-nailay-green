@@ -14,7 +14,7 @@ export default function AuthLayout() {
               <div className="w-4 h-12 bg-black rounded-full rotate-[15deg]"></div>
            </div>
         </div>
-        <h1 className="text-xl font-black text-black tracking-tight uppercase">Lorem Ipsum</h1>
+        <h1 className="text-xl font-black text-black tracking-tight uppercase">BengkelGo</h1>
       </div>
       
       {/* Box Form Putih Bersih */}

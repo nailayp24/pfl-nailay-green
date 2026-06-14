@@ -1,6 +1,8 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+// PERBAIKAN: Jalur mundur diganti dari ../ menjadi ../../ agar keluar dari folder auth dan pages
+import { userAPI } from "../../services/userAPI";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,13 +15,38 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    axios.post("https://dummyjson.com/user/login", {
-        username: dataForm.email,
-        password: dataForm.password,
-    })
-    .then(() => navigate("/"))
-    .catch(() => alert("Login gagal!"))
-    .finally(() => setLoading(false));
+
+    try {
+      const users = await userAPI.getUserByEmail(dataForm.email);
+
+      if (!users || users.length === 0) {
+        alert("Email tidak terdaftar!");
+        return;
+      }
+
+      const loggedInUser = users[0];
+
+      if (loggedInUser.password !== dataForm.password) {
+        alert("Password salah!");
+        return;
+      }
+
+      // Membaca properti nama menggunakan indeks string literal "fullName" dari objek Supabase
+      const sessionData = {
+        fullName: loggedInUser["fullName"] || loggedInUser.fullName || "User Bengkel",
+        email: loggedInUser.email,
+        role: loggedInUser.role
+      };
+
+      localStorage.setItem("user_session", JSON.stringify(sessionData));
+      alert(`Selamat datang kembali, ${sessionData.fullName}!`);
+      navigate("/");
+
+    } catch (error) {
+      alert(`Login gagal! Terjadi kesalahan koneksi: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,12 +55,14 @@ export default function Login() {
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
-          type="text" name="email" required placeholder="Email"
+          type="email" name="email" required placeholder="Email"
+          value={dataForm.email}
           className="w-full h-[52px] bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm focus:outline-none focus:border-black transition-all"
           onChange={handleChange}
         />
         <input
           type="password" name="password" required placeholder="Password"
+          value={dataForm.password}
           className="w-full h-[52px] bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm focus:outline-none focus:border-black transition-all"
           onChange={handleChange}
         />
@@ -45,10 +74,9 @@ export default function Login() {
           <Link to="/forgot" className="text-[#DEE33E] font-bold hover:underline brightness-90">Forgot Password?</Link>
         </div>
 
-        {/* PERBAIKAN: Tombol menjadi warna Lime sesuai Figma */}
         <button 
           type="submit" disabled={loading}
-          className="w-full h-[52px] bg-[#DEE33E] hover:bg-opacity-90 text-black font-bold rounded-2xl shadow-sm transition-all mt-4 text-sm"
+          className="w-full h-[52px] bg-[#DEE33E] hover:bg-opacity-90 text-black font-bold rounded-2xl shadow-sm transition-all mt-4 text-sm disabled:opacity-50"
         >
           {loading ? "Logging in..." : "Sign in with email"}
         </button>

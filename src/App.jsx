@@ -19,25 +19,44 @@ const ServiceSimulation = lazy(() => import("./pages/ServiceSimulation"));
 const Inventory = lazy(() => import("./pages/Inventory"));
 const Customers = lazy(() => import("./pages/Customers"));
 
-// Auth Pages & Wildcard Wildcard
+// Auth Pages & Wildcard
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const Forgot = lazy(() => import("./pages/auth/Forgot"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+// 🔒 KOMPONEN PROTEKSI: Memeriksa apakah user sudah login atau belum
+function ProtectedRoute({ children }) {
+  const isAuthenticated = localStorage.getItem("user_session");
+  
+  // Jika belum login, paksa pindah ke halaman login langsung
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+}
+
 export default function App() {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
-        {/* Auth Group */}
+        {/* Auth Group (Bisa diakses tanpa harus login) */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<Forgot />} />        
+          <Route path="/forgot" element={<Forgot />} />        
         </Route>
 
-        {/* Main Dashboard Group */}
-        <Route element={<MainLayout />}>
+        {/* Main Dashboard Group (Wajib Login dulu via ProtectedRoute) */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Saat buka localhost pertama kali, halaman utama ini langsung diproteksi */}
           <Route path="/" element={<Dashboard />} />
           
           {/* Grouping Services */}
