@@ -9,7 +9,9 @@ export default function Sidebar() {
   
   // 2. Ambil role jabatannya (jika tidak ada akun login, default dikosongkan "")
   const userRole = userSession?.role || "";
-  const userName = userSession?.fullName || "User Bengkel";
+  
+  // FIX VARIABEL: Sesuaikan pembacaan dengan nama kolom Supabase kamu (full_name)
+  const userName = userSession?.full_name || userSession?.fullName || "User Bengkel";
 
   // Fungsi Logout untuk membersihkan session database Supabase
   const handleLogout = () => {
@@ -42,8 +44,8 @@ export default function Sidebar() {
       <nav className="flex-1 flex flex-col gap-2 px-4 overflow-y-auto"> 
         <p className="px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Main Menu</p>
         
-        {/* LEVEL ALL ACCESS: Semua role (Kasir, Mekanik, Owner) bisa lihat Dashboard & Peta */}
-        <NavLink to="/" className={menuClass}>
+        {/* FIX RUTE UTAMA: Dialihkan dari "/" menjadi "/dashboard" agar sinkron dengan App.jsx baru */}
+        <NavLink to="/dashboard" className={menuClass}>
           <FaThLarge className="text-lg" /> Dashboard
         </NavLink>
         
