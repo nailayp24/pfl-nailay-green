@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BsFillExclamationDiamondFill } from "react-icons/bs";
 import { ImSpinner2 } from "react-icons/im";
 import { Link, useNavigate } from "react-router-dom";
-import { userAPI } from "../../services/userAPI";
+import { customerAPI } from "../../services/userAPI"; 
 
 export default function Register() {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ export default function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "Kasir", // Default pilihan awal saat form dimuat
+    role: "Kasir", 
   });
 
   const handleChange = (e) => {
@@ -31,21 +31,20 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // FIX UTAMA: Mengunci properti menggunakan tanda kutip agar dipetakan pas ke kolom camelCase Supabase
       const payload = {
-        "fullName": formData.fullName, 
-        "email": formData.email,
-        "password": formData.password,
-        "role": formData.role,
+        fullName: formData.fullName, 
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
       };
 
-      await userAPI.registerUser(payload);
+      await customerAPI.registerUser(payload);
 
       alert("Akun BengkelGo berhasil dibuat! Silakan login menggunakan akun baru Anda.");
       navigate("/login");
 
     } catch (err) {
-      setError(`Pendaftaran gagal: ${err.message}`);
+      setError(`Pendaftaran gagal: ${err.message || "Terjadi kesalahan koneksi database!"}`);
     } finally {
       setLoading(false);
     }
@@ -64,33 +63,28 @@ export default function Register() {
       <form onSubmit={handleRegister} className="space-y-4">
         <input
           type="text" name="fullName" required placeholder="Full Name"
-          value={formData.fullName}
+          value={formData.fullName} onChange={handleChange}
           className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-4 text-sm focus:outline-none focus:border-black transition-all"
-          onChange={handleChange}
         />
 
         <input
           type="email" name="email" required placeholder="Email"
-          value={formData.email}
+          value={formData.email} onChange={handleChange}
           className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-4 text-sm focus:outline-none focus:border-black transition-all"
-          onChange={handleChange}
         />
 
         <input
           type="password" name="password" required placeholder="Password"
-          value={formData.password}
+          value={formData.password} onChange={handleChange}
           className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-4 text-sm focus:outline-none focus:border-black transition-all"
-          onChange={handleChange}
         />
 
         <input
           type="password" name="confirmPassword" required placeholder="Confirm Password"
-          value={formData.confirmPassword}
+          value={formData.confirmPassword} onChange={handleChange}
           className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-4 text-sm focus:outline-none focus:border-black transition-all"
-          onChange={handleChange}
         />
 
-        {/* Pilihan Otorisasi Hak Akses Bengkel */}
         <div className="space-y-1">
           <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-1">Posisi Jabatan / Role</label>
           <select

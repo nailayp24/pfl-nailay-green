@@ -1,49 +1,61 @@
-import axios from "axios";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-// PERBAIKAN: Jalur mundur diganti dari ../ menjadi ../../ agar keluar dari folder auth dan pages
-import { userAPI } from "../../services/userAPI";
+import { BsFillExclamationDiamondFill } from "react-icons/bs";
+import { ImSpinner2 } from "react-icons/im";
+import { Link, useNavigate } from "react-router-dom";
+import { customerAPI } from "../../services/userAPI"; 
 
 export default function Login() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [dataForm, setDataForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
-  const handleChange = (e) =>
-    setDataForm({ ...dataForm, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
 
     try {
-      const users = await userAPI.getUserByEmail(dataForm.email);
+      // 1. Ambil list data dari tabel bengkel_users Supabase
+      const usersList = await customerAPI.getAllMembers();
+      console.log("Data mentah dari Supabase:", usersList);
 
-      if (!users || users.length === 0) {
-        alert("Email tidak terdaftar!");
-        return;
+      if (!usersList || usersList.length === 0) {
+        throw new Error("Database kosong atau gagal memuat data.");
       }
 
-      const loggedInUser = users[0];
+      // 2. Cari akun yang cocok berdasarkan email (Gunakan .trim() & .toLowerCase() agar kebal salah ketik)
+      const userData = usersList.find(
+        (u) => u.email.trim().toLowerCase() === formData.email.trim().toLowerCase()
+      );
 
-      if (loggedInUser.password !== dataForm.password) {
-        alert("Password salah!");
-        return;
+      if (!userData) {
+        throw new Error("Email tidak terdaftar di database Supabase!");
       }
 
-      // Membaca properti nama menggunakan indeks string literal "fullName" dari objek Supabase
-      const sessionData = {
-        fullName: loggedInUser["fullName"] || loggedInUser.fullName || "User Bengkel",
-        email: loggedInUser.email,
-        role: loggedInUser.role
-      };
+      // 3. Validasi kecocokan password mentah
+      if (userData.password !== formData.password) {
+        throw new Error("Password yang Anda masukkan salah!");
+      }
 
-      localStorage.setItem("user_session", JSON.stringify(sessionData));
-      alert(`Selamat datang kembali, ${sessionData.fullName}!`);
-      navigate("/");
+      // 4. FIX UTAMA: Membaca nama lengkap secara aman dari kolom full_name Supabase kamu!
+      const userFullName = userData.full_name || userData.fullName || "User BengkelGo";
 
-    } catch (error) {
-      alert(`Login gagal! Terjadi kesalahan koneksi: ${error.message}`);
+      // Simpan session objek utuh ke localStorage untuk Route Guard
+      localStorage.setItem("user_session", JSON.stringify(userData));
+
+      alert(`Selamat Datang Kembali, ${userFullName}!`);
+      
+      // Lempar sukses masuk ke halaman dashboard internal bengkel
+      navigate("/dashboard");
+
+    } catch (err) {
+      console.error(err);
+      setError(`Login gagal: ${err.message || "Terjadi kesalahan sistem!"}`);
     } finally {
       setLoading(false);
     }
@@ -51,38 +63,48 @@ export default function Login() {
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-extrabold text-center text-gray-800 mb-8">Login to your account</h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="email" name="email" required placeholder="Email"
-          value={dataForm.email}
-          className="w-full h-[52px] bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm focus:outline-none focus:border-black transition-all"
-          onChange={handleChange}
-        />
-        <input
-          type="password" name="password" required placeholder="Password"
-          value={dataForm.password}
-          className="w-full h-[52px] bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm focus:outline-none focus:border-black transition-all"
-          onChange={handleChange}
-        />
+      <h2 className="text-xl font-extrabold text-gray-800 mb-6">Welcome Back</h2>
 
-        <div className="flex justify-between items-center text-xs pt-1">
-          <label className="flex items-center gap-2 text-gray-500 font-medium cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300 text-black focus:ring-0" /> Remember me
-          </label>
-          <Link to="/forgot" className="text-[#DEE33E] font-bold hover:underline brightness-90">Forgot Password?</Link>
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold mb-4 flex items-center gap-2 border border-red-100">
+          <BsFillExclamationDiamondFill size={16} /> {error}
         </div>
+      )}
 
-        <button 
-          type="submit" disabled={loading}
-          className="w-full h-[52px] bg-[#DEE33E] hover:bg-opacity-90 text-black font-bold rounded-2xl shadow-sm transition-all mt-4 text-sm disabled:opacity-50"
+      <form onSubmit={handleLogin} className="space-y-4">
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="Email Address"
+          value={formData.email}
+          onChange={handleChange}
+          className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-4 text-sm focus:outline-none focus:border-black transition-all"
+        />
+
+        <input
+          type="password"
+          name="password"
+          required
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-4 text-sm focus:outline-none focus:border-black transition-all"
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-[#DEE33E] hover:bg-opacity-90 text-black font-bold py-3.5 rounded-2xl shadow-sm transition-all flex justify-center items-center gap-2 mt-4 text-sm disabled:opacity-50"
         >
-          {loading ? "Logging in..." : "Sign in with email"}
+          {loading ? <ImSpinner2 className="animate-spin text-lg" /> : "Sign in to account"}
         </button>
 
-        <p className="text-center text-xs text-gray-400 pt-6">
-          Don't have an account? <Link to="/register" className="text-[#DEE33E] font-bold hover:underline brightness-90">Get Started</Link>
+        <p className="text-center text-xs text-gray-400 pt-4">
+          Don't have an account yet?{" "}
+          <Link to="/register" className="text-[#DEE33E] font-bold hover:underline brightness-90">
+            Register Now
+          </Link>
         </p>
       </form>
     </div>
