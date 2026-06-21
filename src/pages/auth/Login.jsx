@@ -28,7 +28,7 @@ export default function Login() {
         throw new Error("Database kosong atau gagal memuat data.");
       }
 
-      // 2. Cari akun yang cocok berdasarkan email (Gunakan .trim() & .toLowerCase() agar kebal salah ketik)
+      // 2. Cari akun yang cocok berdasarkan email
       const userData = usersList.find(
         (u) => u.email.trim().toLowerCase() === formData.email.trim().toLowerCase()
       );
@@ -42,16 +42,25 @@ export default function Login() {
         throw new Error("Password yang Anda masukkan salah!");
       }
 
-      // 4. FIX UTAMA: Membaca nama lengkap secara aman dari kolom full_name Supabase kamu!
+      // 4. Membaca nama lengkap secara aman dari kolom Supabase
       const userFullName = userData.full_name || userData.fullName || "User BengkelGo";
+      const userRole = userData.role || "Member"; // Mengambil level role (Member / Kasir / Mekanik / Owner)
 
-      // Simpan session objek utuh ke localStorage untuk Route Guard
+      // Simpan session objek utuh ke localStorage untuk dibaca oleh Sidebar
       localStorage.setItem("user_session", JSON.stringify(userData));
 
       alert(`Selamat Datang Kembali, ${userFullName}!`);
       
-      // Lempar sukses masuk ke halaman dashboard internal bengkel
-      navigate("/dashboard");
+      // ==================== PERUBAHAN UTAMA UNTUK DOSEN ====================
+      // Memeriksa peran jabatan untuk menentukan rute halaman dashboard tujuan
+      if (userRole === "Member") {
+        // Jika statusnya adalah Pelanggan/Member, lempar ke Dashboard khusus Member
+        navigate("/member-dashboard"); 
+      } else {
+        // Jika statusnya staf internal (Kasir, Mekanik, Owner), lempar ke Dashboard Utama Bengkel
+        navigate("/dashboard");
+      }
+      // =====================================================================
 
     } catch (err) {
       console.error(err);
