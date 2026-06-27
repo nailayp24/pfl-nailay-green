@@ -41,6 +41,65 @@ export default function GuestLanding() {
     channel: "WhatsApp",
   });
 
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    { sender: "bot", text: "Halo! Saya asisten virtual BengkelGo. Pilih salah satu untuk bantuan cepat." },
+  ]);
+
+  const promoCards = [
+    {
+      title: "Promo Member Baru",
+      desc: "Dapatkan diskon 10% untuk servis berkala pertama setelah daftar.",
+      action: "Lihat Promo",
+      type: "promo",
+    },
+    {
+      title: "Voucher Spooring",
+      desc: "Gratis pemeriksaan tekanan ban saat booking spoering pertama.",
+      action: "Gunakan Sekarang",
+      type: "voucher",
+    },
+    {
+      title: "Jadwal Cepat",
+      desc: "Booking cepat dengan prioritas slot untuk pelanggan terdaftar.",
+      action: "Login untuk Ambil",
+      type: "schedule",
+    },
+  ];
+
+  const quickReplies = [
+    { label: "Info Promo", value: "promo" },
+    { label: "Jadwal Service", value: "jadwal" },
+    { label: "Hubungi CS", value: "cs" },
+  ];
+
+  const handleQuickReply = (reply) => {
+    setChatMessages((prev) => [...prev, { sender: "user", text: reply.label }]);
+
+    const botReplies = {
+      promo: "Promo member baru: diskon 10% servis berkala + voucher spoering. Login sekarang untuk klaim.",
+      jadwal: "Silakan masuk untuk melihat slot tersisa dan reservasi jadwal servis Anda.",
+      cs: "Tim CS kami siap membantu lewat WhatsApp atau email. Masuk untuk menghubungi langsung.",
+    };
+
+    setTimeout(() => {
+      setChatMessages((prev) => [...prev, { sender: "bot", text: botReplies[reply.value] || "Maaf, saya belum mengerti. Coba pilih pilihan lain." }]);
+    }, 250);
+  };
+
+  const handlePromoAction = (promo) => {
+    alert(`🎯 Untuk menggunakan promo '${promo.title}', silakan masuk atau daftar terlebih dahulu.`);
+    navigate("/login");
+  };
+
+  const handlePrimaryAction = () => {
+    navigate("/login");
+  };
+
+  const handleSecondaryAction = () => {
+    navigate("/register", { state: { roleDefault: "Member" } });
+  };
+
   const features = [
     {
       icon: <FaCalendarCheck />,
@@ -204,17 +263,21 @@ export default function GuestLanding() {
 
             <div className="mt-8 flex max-w-[calc(100vw-48px)] flex-col gap-3 sm:max-w-none sm:flex-row">
               <button
-                onClick={() => setIsBookingOpen(true)}
+                onClick={handlePrimaryAction}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#DEE33E] px-5 py-4 text-xs font-black uppercase text-black shadow-lg shadow-[#DEE33E]/20 hover:bg-[#cbd02f] sm:w-auto sm:px-7 sm:text-sm"
               >
                 Booking Servis Sekarang <FaChevronRight size={12} />
               </button>
               <button
-                onClick={() => setIsComplaintOpen(true)}
+                onClick={handlePrimaryAction}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 px-5 py-4 text-sm font-bold text-white hover:bg-white/10 sm:w-auto sm:px-7"
               >
-                Ajukan Keluhan
+                Pusat Pengaduan
               </button>
+            </div>
+
+            <div className="mt-4 text-sm text-white/70">
+              Siap jadi member? <button onClick={handleSecondaryAction} className="font-black text-[#DEE33E] hover:text-white">Daftar Sekarang</button>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-4 text-xs font-bold text-white/72">
@@ -350,6 +413,35 @@ export default function GuestLanding() {
           </div>
         </section>
 
+        <section id="promo" className="bg-white px-6 py-20">
+          <div className="mx-auto max-w-7xl">
+            <div className="max-w-2xl">
+              <p className="text-xs font-black uppercase tracking-widest text-[#9FA324]">Promo</p>
+              <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950 md:text-4xl">
+                Penawaran interaktif untuk memotivasi tindakan.
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-gray-500">
+                Klik kartu promo untuk melihat bagaimana sistem CRM BengkelGo mengarahkan Anda ke autentikasi dan klaim penawaran.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
+              {promoCards.map((promo) => (
+                <div key={promo.title} className="rounded-3xl border border-gray-100 bg-gray-50 p-6 shadow-sm">
+                  <h3 className="text-lg font-black text-gray-950">{promo.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-gray-500">{promo.desc}</p>
+                  <button
+                    onClick={() => handlePromoAction(promo)}
+                    className="mt-6 inline-flex items-center justify-center rounded-2xl bg-[#DEE33E] px-4 py-3 text-sm font-black uppercase text-black hover:bg-[#cbd02f]"
+                  >
+                    {promo.action}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section id="faq" className="bg-white px-6 py-20">
           <div className="mx-auto max-w-4xl">
             <div className="text-center">
@@ -383,7 +475,7 @@ export default function GuestLanding() {
               Mulai dari booking cepat, lalu lanjutkan sebagai member untuk menyimpan riwayat servis dan mendapatkan promo yang relevan.
             </p>
             <button
-              onClick={() => setIsBookingOpen(true)}
+              onClick={handlePrimaryAction}
               className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#DEE33E] px-8 py-4 text-sm font-black uppercase text-black hover:bg-[#cbd02f]"
             >
               Booking Servis Sekarang <FaChevronRight size={12} />
@@ -423,13 +515,13 @@ export default function GuestLanding() {
           <div>
             <h4 className="text-xs font-black uppercase tracking-widest text-gray-950">Aksi</h4>
             <div className="mt-4 space-y-3 text-sm text-gray-500">
-              <button onClick={() => setIsBookingOpen(true)} className="block hover:text-black">
+              <button onClick={handlePrimaryAction} className="block hover:text-black">
                 Booking Servis
               </button>
               <button onClick={() => navigate("/login")} className="block hover:text-black">
                 Masuk Akun
               </button>
-              <button onClick={() => navigate("/register")} className="block hover:text-black">
+              <button onClick={handleSecondaryAction} className="block hover:text-black">
                 Daftar Member
               </button>
             </div>
@@ -524,6 +616,56 @@ export default function GuestLanding() {
           </div>
         </div>
       )}
+
+      <div className="fixed inset-x-0 bottom-6 z-40 flex items-end justify-end px-6">
+        <div className="flex flex-col items-end gap-3">
+          {isChatOpen && (
+            <div className="max-w-sm rounded-[28px] border border-gray-200 bg-white p-4 shadow-2xl">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-black text-gray-900">Asisten BengkelGo</p>
+                  <p className="text-xs text-gray-500">Bantuan 24/7 sebelum daftar</p>
+                </div>
+                <button
+                  onClick={() => setIsChatOpen(false)}
+                  className="rounded-full p-2 text-gray-400 hover:bg-gray-100"
+                  aria-label="Tutup chat"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+              <div className="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
+                {chatMessages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`max-w-[90%] rounded-2xl p-3 text-sm ${msg.sender === "bot" ? "bg-gray-100 text-gray-900 self-start" : "bg-[#DEE33E]/20 text-gray-900 self-end"}`}
+                  >
+                    {msg.text}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {quickReplies.map((reply) => (
+                  <button
+                    key={reply.value}
+                    onClick={() => handleQuickReply(reply)}
+                    className="rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                  >
+                    {reply.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <button
+            onClick={() => setIsChatOpen((prev) => !prev)}
+            className="inline-flex items-center gap-3 rounded-full bg-[#DEE33E] px-5 py-3 text-sm font-black text-black shadow-2xl shadow-[#DEE33E]/20"
+          >
+            <FaQuestionCircle />
+            {isChatOpen ? "Tutup Bantuan" : "Bantuan 24/7"}
+          </button>
+        </div>
+      </div>
 
       {isComplaintOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
