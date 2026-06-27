@@ -14,7 +14,6 @@ import {
   FaStar,
   FaTimes,
   FaTools,
-  FaUser,
   FaUserShield,
   FaWrench,
 } from "react-icons/fa";
@@ -23,28 +22,21 @@ import heroImage from "../assets/hero.png";
 export default function GuestLanding() {
   const navigate = useNavigate();
 
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [bookingForm, setBookingForm] = useState({
-    name: "",
-    phone: "",
-    vehicle: "",
-    date: "",
-    service: "Service Berkala",
-  });
-
-  const [isComplaintOpen, setIsComplaintOpen] = useState(false);
-  const [complaintForm, setComplaintForm] = useState({
-    name: "",
-    email: "",
-    category: "Layanan Staff",
-    message: "",
-    channel: "WhatsApp",
-  });
-
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     { sender: "bot", text: "Halo! Saya asisten virtual BengkelGo. Pilih salah satu untuk bantuan cepat." },
   ]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatTrigger, setChatTrigger] = useState(null);
+
+  const accessBarrier = () => {
+    alert("Akses Terbatas! Anda diwajibkan untuk masuk atau mendaftar.");
+    navigate("/login");
+  };
+
+  const handleLoginTrigger = () => {
+    navigate("/login");
+  };
 
   const promoCards = [
     {
@@ -78,21 +70,47 @@ export default function GuestLanding() {
 
     const botReplies = {
       promo: "Promo member baru: diskon 10% servis berkala + voucher spoering. Login sekarang untuk klaim.",
-      jadwal: "Silakan masuk untuk melihat slot tersisa dan reservasi jadwal servis Anda.",
+      jadwal: "Anda perlu masuk untuk melihat jadwal dan reservasi. Tekan tombol di bawah untuk lanjut.",
       cs: "Tim CS kami siap membantu lewat WhatsApp atau email. Masuk untuk menghubungi langsung.",
     };
 
     setTimeout(() => {
       setChatMessages((prev) => [...prev, { sender: "bot", text: botReplies[reply.value] || "Maaf, saya belum mengerti. Coba pilih pilihan lain." }]);
+      setChatTrigger(reply.value === "jadwal" || reply.value === "promo" ? {
+        label: "Masuk untuk Lanjutkan",
+        action: handleLoginTrigger,
+      } : null);
+    }, 250);
+  };
+
+  const handleChatInputSubmit = (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const text = chatInput.trim();
+    setChatMessages((prev) => [...prev, { sender: "user", text }]);
+    setChatInput("");
+
+    const lowerText = text.toLowerCase();
+    const containsBooking = lowerText.includes("booking") || lowerText.includes("reservasi");
+    const containsSchedule = lowerText.includes("jadwal");
+
+    let botText = "Maaf, saya belum mengerti. Coba pilih opsi cepat atau masuk untuk layanan lebih lanjut.";
+    let trigger = null;
+
+    if (containsBooking || containsSchedule) {
+      botText = "Untuk akses booking dan jadwal, Anda harus masuk sebagai member. Tekan tombol di bawah untuk login.";
+      trigger = { label: "Masuk ke Login Member", action: handleLoginTrigger };
+    }
+
+    setTimeout(() => {
+      setChatMessages((prev) => [...prev, { sender: "bot", text: botText }]);
+      setChatTrigger(trigger);
     }, 250);
   };
 
   const handlePromoAction = (promo) => {
     alert(`🎯 Untuk menggunakan promo '${promo.title}', silakan masuk atau daftar terlebih dahulu.`);
-    navigate("/login");
-  };
-
-  const handlePrimaryAction = () => {
     navigate("/login");
   };
 
@@ -161,40 +179,6 @@ export default function GuestLanding() {
     },
   ];
 
-  const handleBookingSubmit = (e) => {
-    e.preventDefault();
-    alert(
-      `[GUEST CRM] Booking berhasil dikirim.\nUnit: ${bookingForm.vehicle}\nKasir akan konfirmasi via WhatsApp ke ${bookingForm.phone}.`
-    );
-    setIsBookingOpen(false);
-    setBookingForm({
-      name: "",
-      phone: "",
-      vehicle: "",
-      date: "",
-      service: "Service Berkala",
-    });
-  };
-
-  const handleComplaintSubmit = (e) => {
-    e.preventDefault();
-    const channelMsg =
-      complaintForm.channel === "WhatsApp"
-        ? "Tim kami akan follow-up via WhatsApp dalam 1 jam kerja."
-        : `Respon resmi akan dikirim ke ${complaintForm.email} dalam 24 jam.`;
-
-    alert(
-      `[COMPLAINT REGISTERED]\nKeluhan atas nama ${complaintForm.name} berhasil masuk.\n${channelMsg}`
-    );
-    setIsComplaintOpen(false);
-    setComplaintForm({
-      name: "",
-      email: "",
-      category: "Layanan Staff",
-      message: "",
-      channel: "WhatsApp",
-    });
-  };
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-white font-outfit text-gray-900 scroll-smooth">
@@ -263,13 +247,13 @@ export default function GuestLanding() {
 
             <div className="mt-8 flex max-w-[calc(100vw-48px)] flex-col gap-3 sm:max-w-none sm:flex-row">
               <button
-                onClick={handlePrimaryAction}
+                onClick={accessBarrier}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#DEE33E] px-5 py-4 text-xs font-black uppercase text-black shadow-lg shadow-[#DEE33E]/20 hover:bg-[#cbd02f] sm:w-auto sm:px-7 sm:text-sm"
               >
                 Booking Servis Sekarang <FaChevronRight size={12} />
               </button>
               <button
-                onClick={handlePrimaryAction}
+                onClick={accessBarrier}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 px-5 py-4 text-sm font-bold text-white hover:bg-white/10 sm:w-auto sm:px-7"
               >
                 Pusat Pengaduan
@@ -475,7 +459,7 @@ export default function GuestLanding() {
               Mulai dari booking cepat, lalu lanjutkan sebagai member untuk menyimpan riwayat servis dan mendapatkan promo yang relevan.
             </p>
             <button
-              onClick={handlePrimaryAction}
+              onClick={accessBarrier}
               className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#DEE33E] px-8 py-4 text-sm font-black uppercase text-black hover:bg-[#cbd02f]"
             >
               Booking Servis Sekarang <FaChevronRight size={12} />
@@ -515,7 +499,7 @@ export default function GuestLanding() {
           <div>
             <h4 className="text-xs font-black uppercase tracking-widest text-gray-950">Aksi</h4>
             <div className="mt-4 space-y-3 text-sm text-gray-500">
-              <button onClick={handlePrimaryAction} className="block hover:text-black">
+              <button onClick={accessBarrier} className="block hover:text-black">
                 Booking Servis
               </button>
               <button onClick={() => navigate("/login")} className="block hover:text-black">
@@ -541,81 +525,6 @@ export default function GuestLanding() {
         </p>
       </footer>
 
-      {isBookingOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[28px] bg-white p-8 shadow-2xl">
-            <button
-              onClick={() => setIsBookingOpen(false)}
-              className="absolute right-5 top-5 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-black"
-              aria-label="Tutup modal booking"
-            >
-              <FaTimes />
-            </button>
-            <div className="mb-6">
-              <h4 className="text-xl font-black text-gray-900">Booking Kendaraan</h4>
-              <p className="mt-1 text-sm text-gray-500">Isi data singkat, kasir akan mengonfirmasi slot Anda.</p>
-            </div>
-            <form onSubmit={handleBookingSubmit} className="space-y-3">
-              <div className="relative">
-                <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  required
-                  placeholder="Nama Lengkap"
-                  value={bookingForm.name}
-                  onChange={(e) => setBookingForm({ ...bookingForm, name: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm outline-none focus:border-[#9FA324]"
-                />
-              </div>
-              <div className="relative">
-                <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  required
-                  placeholder="Nomor WhatsApp"
-                  value={bookingForm.phone}
-                  onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm outline-none focus:border-[#9FA324]"
-                />
-              </div>
-              <div className="relative">
-                <FaCar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  required
-                  placeholder="Unit Mobil dan Plat"
-                  value={bookingForm.vehicle}
-                  onChange={(e) => setBookingForm({ ...bookingForm, vehicle: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm outline-none focus:border-[#9FA324]"
-                />
-              </div>
-              <select
-                value={bookingForm.service}
-                onChange={(e) => setBookingForm({ ...bookingForm, service: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-[#9FA324]"
-              >
-                <option value="Service Berkala">Service Berkala Mobil</option>
-                <option value="Spooring Precision">Spooring & Balancing</option>
-                <option value="Service AC">Service AC</option>
-                <option value="General Check-Up">General Check-Up</option>
-              </select>
-              <input
-                type="datetime-local"
-                required
-                value={bookingForm.date}
-                onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-[#9FA324]"
-              />
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-[#DEE33E] py-3.5 text-sm font-black uppercase text-black hover:bg-[#cbd02f]"
-              >
-                Kirim Booking
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       <div className="fixed inset-x-0 bottom-6 z-40 flex items-end justify-end px-6">
         <div className="flex flex-col items-end gap-3">
@@ -644,6 +553,21 @@ export default function GuestLanding() {
                   </div>
                 ))}
               </div>
+              <form onSubmit={handleChatInputSubmit} className="mt-4 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Tulis pertanyaan..."
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#9FA324]"
+                />
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-[#DEE33E] px-4 py-2 text-xs font-black uppercase text-black hover:bg-[#cbd02f]"
+                >
+                  Kirim
+                </button>
+              </form>
               <div className="mt-4 flex flex-wrap gap-2">
                 {quickReplies.map((reply) => (
                   <button
@@ -655,6 +579,17 @@ export default function GuestLanding() {
                   </button>
                 ))}
               </div>
+              {chatTrigger && (
+                <div className="mt-4 rounded-2xl border border-[#DEE33E] bg-[#FEFFEA] p-3 text-sm text-gray-900">
+                  <p className="mb-3 font-bold">Akses khusus member diperlukan</p>
+                  <button
+                    onClick={chatTrigger.action}
+                    className="inline-flex w-full items-center justify-center rounded-2xl bg-[#DEE33E] px-4 py-3 text-sm font-black uppercase text-black hover:bg-[#cbd02f]"
+                  >
+                    {chatTrigger.label}
+                  </button>
+                </div>
+              )}
             </div>
           )}
           <button
@@ -667,73 +602,6 @@ export default function GuestLanding() {
         </div>
       </div>
 
-      {isComplaintOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[28px] bg-white p-8 shadow-2xl">
-            <button
-              onClick={() => setIsComplaintOpen(false)}
-              className="absolute right-5 top-5 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-black"
-              aria-label="Tutup modal keluhan"
-            >
-              <FaTimes />
-            </button>
-            <div className="mb-6">
-              <h4 className="text-xl font-black text-gray-900">Ajukan Keluhan</h4>
-              <p className="mt-1 text-sm text-gray-500">Keluhan masuk ke CRM agar tim dapat melakukan follow-up.</p>
-            </div>
-            <form onSubmit={handleComplaintSubmit} className="space-y-3">
-              <input
-                type="text"
-                required
-                placeholder="Nama Lengkap"
-                value={complaintForm.name}
-                onChange={(e) => setComplaintForm({ ...complaintForm, name: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-[#9FA324]"
-              />
-              <input
-                type="email"
-                required
-                placeholder="Email"
-                value={complaintForm.email}
-                onChange={(e) => setComplaintForm({ ...complaintForm, email: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-[#9FA324]"
-              />
-              <select
-                value={complaintForm.category}
-                onChange={(e) => setComplaintForm({ ...complaintForm, category: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-[#9FA324]"
-              >
-                <option value="Layanan Staff">Masalah Pelayanan Staff</option>
-                <option value="Kualitas Part">Masalah Kualitas Part</option>
-                <option value="Hasil Kerja">Hasil Kerja Tidak Sesuai</option>
-                <option value="Harga">Masalah Harga atau Biaya</option>
-              </select>
-              <textarea
-                required
-                rows="4"
-                placeholder="Tulis kronologi keluhan"
-                value={complaintForm.message}
-                onChange={(e) => setComplaintForm({ ...complaintForm, message: e.target.value })}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm outline-none focus:border-[#9FA324]"
-              />
-              <select
-                value={complaintForm.channel}
-                onChange={(e) => setComplaintForm({ ...complaintForm, channel: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-[#9FA324]"
-              >
-                <option value="WhatsApp">Follow-up via WhatsApp</option>
-                <option value="Email">Follow-up via Email</option>
-              </select>
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-black py-3.5 text-sm font-black uppercase text-white hover:bg-gray-800"
-              >
-                Kirim Keluhan
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
