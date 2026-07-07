@@ -31,6 +31,7 @@ export default function GuestLanding() {
   const [chatTrigger, setChatTrigger] = useState(null);
   const [promoCards, setPromoCards] = useState([]);
   const [isLoadingPromos, setIsLoadingPromos] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const accessBarrier = () => {
     alert("Akses Terbatas! Anda diwajibkan untuk masuk atau mendaftar.");
@@ -200,20 +201,31 @@ export default function GuestLanding() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-white font-outfit text-[#1F2937] scroll-smooth">
       <header className="relative min-h-[92vh] overflow-hidden bg-[#F8F9FA]">
-        {/* Foto asli full-width sebagai background hero */}
+        {/* Optimized Hero Image dengan lazy loading dan object position */}
         <div className="absolute inset-0">
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
+          )}
           <img
             src={heroImage}
-            alt="Mekanik BengkelGo sedang menangani servis kendaraan"
-            className="h-full w-full object-cover object-center"
+            alt="Mekanik profesional BengkelGo sedang melakukan servis kendaraan dengan peralatan modern"
+            loading="eager"
+            fetchPriority="high"
+            onLoad={() => setImageLoaded(true)}
+            className={`h-full w-full object-cover object-center transition-opacity duration-700 ${
+              imageLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ objectPosition: "65% center" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-[#F8F9FA]" />
+          {/* Gradient overlay yang lebih subtle untuk text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/85 via-[55%] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-[#F8F9FA]/90" />
         </div>
 
-        {/* Blob dekoratif tipis di atas foto */}
-        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#DEE33E]/20 blur-3xl" />
-        <div className="pointer-events-none absolute right-0 top-40 h-96 w-96 rounded-full bg-red-200/20 blur-3xl" />
+        {/* Blob dekoratif yang disesuaikan dengan komposisi gambar baru */}
+        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#DEE33E]/15 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-40 h-96 w-96 rounded-full bg-red-100/15 blur-3xl" />
+        <div className="pointer-events-none absolute left-1/3 top-1/3 h-64 w-64 rounded-full bg-[#DEE33E]/10 blur-3xl" />
 
         <nav className="fixed inset-x-0 top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5">
@@ -222,7 +234,7 @@ export default function GuestLanding() {
               className="flex items-center gap-3 text-left"
               aria-label="BengkelGo home"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DEE33E] text-black">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DEE33E] text-black shadow-lg">
                 <FaWrench />
               </span>
               <span>
@@ -234,10 +246,10 @@ export default function GuestLanding() {
             </button>
 
             <div className="hidden items-center gap-7 text-xs font-bold text-gray-500 md:flex">
-              <a href="#fitur" className="hover:text-[#1F2937]">Fitur</a>
-              <a href="#tentang" className="hover:text-[#1F2937]">Tentang</a>
-              <a href="#promo" className="hover:text-[#1F2937]">Promo</a>
-              <a href="#faq" className="hover:text-[#1F2937]">FAQ</a>
+              <a href="#fitur" className="hover:text-[#1F2937] transition-colors">Fitur</a>
+              <a href="#tentang" className="hover:text-[#1F2937] transition-colors">Tentang</a>
+              <a href="#promo" className="hover:text-[#1F2937] transition-colors">Promo</a>
+              <a href="#faq" className="hover:text-[#1F2937] transition-colors">FAQ</a>
             </div>
 
             <div className="flex items-center gap-2">
@@ -249,7 +261,7 @@ export default function GuestLanding() {
               </button>
               <button
                 onClick={() => navigate("/register", { state: { roleDefault: "Member" } })}
-                className="hidden items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-black text-white transition-all duration-300 hover:scale-[1.02] hover:bg-red-700 sm:flex"
+                className="hidden items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-black text-white transition-all duration-300 hover:scale-[1.02] hover:bg-red-700 sm:flex shadow-lg shadow-red-600/25"
               >
                 <FaSignInAlt /> Daftar
               </button>
@@ -259,14 +271,14 @@ export default function GuestLanding() {
 
         <section className="relative z-10 mx-auto grid max-w-7xl gap-10 overflow-hidden px-6 pb-16 pt-28 md:grid-cols-[1.02fr_0.98fr] md:pb-20 md:pt-32">
           <div className="min-w-0 max-w-[calc(100vw-48px)] sm:max-w-3xl">
-            <span className="inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-[#DEE33E]/50 bg-[#DEE33E]/20 px-4 py-2 text-center text-[10px] font-black uppercase tracking-widest text-[#5c5f10] sm:text-[11px]">
+            <span className="inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-[#DEE33E]/50 bg-[#DEE33E]/20 px-4 py-2 text-center text-[10px] font-black uppercase tracking-widest text-[#5c5f10] sm:text-[11px] backdrop-blur-sm">
               <FaCar /> Untuk pemilik mobil dan tim bengkel
             </span>
-            <h1 className="mt-6 max-w-[calc(100vw-48px)] text-3xl font-black leading-[1.08] tracking-normal text-[#1F2937] sm:max-w-4xl sm:text-5xl lg:text-6xl">
+            <h1 className="mt-6 max-w-[calc(100vw-48px)] text-3xl font-black leading-[1.08] tracking-normal text-[#1F2937] sm:max-w-4xl sm:text-5xl lg:text-6xl drop-shadow-sm">
               Service mobil lebih mudah
               <br className="sm:hidden" /> dari booking sampai selesai.
             </h1>
-            <p className="mt-6 max-w-[calc(100vw-48px)] text-base leading-8 text-gray-500 sm:max-w-2xl md:text-lg">
+            <p className="mt-6 max-w-[calc(100vw-48px)] text-base leading-8 text-gray-600 sm:max-w-2xl md:text-lg font-medium">
               BengkelGo membantu pelanggan memesan jadwal dan melihat layanan.
               <span className="hidden sm:inline"> Tim bengkel mengelola operasional dari satu sistem.</span>
             </p>
@@ -274,20 +286,20 @@ export default function GuestLanding() {
             <div className="mt-8 flex max-w-[calc(100vw-48px)] flex-col gap-3 sm:max-w-none sm:flex-row">
               <button
                 onClick={accessBarrier}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-red-600 px-5 py-4 text-xs font-black uppercase text-white shadow-lg shadow-red-600/25 transition-all duration-300 hover:scale-[1.02] hover:bg-red-700 sm:w-auto sm:px-7 sm:text-sm"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-red-600 px-5 py-4 text-xs font-black uppercase text-white shadow-xl shadow-red-600/30 transition-all duration-300 hover:scale-[1.02] hover:bg-red-700 hover:shadow-2xl sm:w-auto sm:px-7 sm:text-sm"
               >
                 Booking Servis Sekarang <FaChevronRight size={12} />
               </button>
               <button
                 onClick={accessBarrier}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#1F2937]/15 bg-white px-5 py-4 text-sm font-bold text-[#1F2937] transition-all duration-300 hover:scale-[1.02] hover:border-[#DEE33E] hover:bg-[#DEE33E]/10 sm:w-auto sm:px-7"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#1F2937]/20 bg-white/90 backdrop-blur-sm px-5 py-4 text-sm font-bold text-[#1F2937] transition-all duration-300 hover:scale-[1.02] hover:border-[#DEE33E] hover:bg-[#DEE33E]/10 sm:w-auto sm:px-7"
               >
                 Pusat Pengaduan
               </button>
             </div>
 
-            <div className="mt-4 text-sm text-gray-500">
-              Siap jadi member? <button onClick={handleSecondaryAction} className="font-black text-red-600 hover:text-red-700">Daftar Sekarang</button>
+            <div className="mt-4 text-sm text-gray-600 font-medium">
+              Siap jadi member? <button onClick={handleSecondaryAction} className="font-black text-red-600 hover:text-red-700 underline decoration-2 underline-offset-2">Daftar Sekarang</button>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-4 text-xs font-bold text-gray-600">
@@ -298,7 +310,7 @@ export default function GuestLanding() {
           </div>
 
           <div className="hidden min-w-0 max-w-[calc(100vw-48px)] self-auto md:block md:max-w-none md:self-end">
-            <div className="w-full max-w-full rounded-[28px] border border-gray-200 bg-white p-4 text-[#1F2937] shadow-2xl shadow-[#DEE33E]/10">
+            <div className="w-full max-w-full rounded-[28px] border border-gray-200 bg-white/95 backdrop-blur-xl p-4 text-[#1F2937] shadow-2xl shadow-[#DEE33E]/15">
               <div className="rounded-2xl bg-gradient-to-br from-[#1F2937] to-[#111827] p-4 text-white">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
@@ -316,7 +328,7 @@ export default function GuestLanding() {
                   ["Brio BM 9012 CC", "Cek rem depan", "40%"],
                   ["NMAX BM 5678 NY", "Menunggu sparepart", "20%"],
                 ].map(([unit, job, progress]) => (
-                  <div key={unit} className="mb-3 min-w-0 rounded-xl bg-white/10 p-4">
+                  <div key={unit} className="mb-3 min-w-0 rounded-xl bg-white/10 p-4 backdrop-blur-sm">
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-black">{unit}</p>
