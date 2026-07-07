@@ -20,18 +20,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // 1. Ambil list data dari tabel bengkel_users Supabase
-      const usersList = await customerAPI.getAllMembers();
-      console.log("Data mentah dari Supabase:", usersList);
-
-      if (!usersList || usersList.length === 0) {
-        throw new Error("Database kosong atau gagal memuat data.");
-      }
-
-      // 2. Cari akun yang cocok berdasarkan email
-      const userData = usersList.find(
-        (u) => u.email.trim().toLowerCase() === formData.email.trim().toLowerCase()
-      );
+      const userData = await customerAPI.getMemberByEmail(formData.email.trim().toLowerCase());
 
       if (!userData) {
         throw new Error("Email tidak terdaftar di database Supabase!");
@@ -42,24 +31,27 @@ export default function Login() {
         throw new Error("Password yang Anda masukkan salah!");
       }
 
-      // 4. Membaca nama lengkap secara aman dari kolom Supabase
-      const userFullName = userData.full_name || userData.fullName || "User BengkelGo";
-      const userRole = userData.role || "Member"; // Mengambil level role (Member / Kasir / Mekanik / Owner)
+// ... proses validasi password berhasil ...
 
-      // Simpan session objek utuh ke localStorage untuk dibaca oleh Sidebar
-      localStorage.setItem("user_session", JSON.stringify(userData));
+const userFullName = userData.fullName || "User BengkelGo";
+const userRole = userData.role || "Member";
 
-      alert(`Selamat Datang Kembali, ${userFullName}!`);
-      
-      // ==================== PERUBAHAN UTAMA UNTUK DOSEN ====================
-      // Memeriksa peran jabatan untuk menentukan rute halaman dashboard tujuan
-      if (userRole === "Member") {
-        // Jika statusnya adalah Pelanggan/Member, lempar ke Dashboard khusus Member
-        navigate("/member-dashboard"); 
-      } else {
-        // Jika statusnya staf internal (Kasir, Mekanik, Owner), lempar ke Dashboard Utama Bengkel
-        navigate("/dashboard");
-      }
+// Simpan session objek utuh ke localStorage
+localStorage.setItem("user_session", JSON.stringify(userData));
+// Clean stale local overrides that might interfere with role/tier
+localStorage.removeItem("bengkelgo_local_member_overrides");
+localStorage.removeItem("bengkelgo_local_members");
+
+alert(`Selamat Datang Kembali, ${userFullName}!\n\nRole Anda: ${userRole}`);
+
+// Pengalihan rute tujuan setelah login sukses
+if (userRole === "Member") {
+  navigate("/member-dashboard", { replace: true }); 
+} else if (userRole === "Kasir" || userRole === "Mekanik" || userRole === "Owner") {
+  navigate("/dashboard", { replace: true });
+} else {
+  navigate("/login", { replace: true });
+}
       // =====================================================================
 
     } catch (err) {
@@ -72,8 +64,6 @@ export default function Login() {
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-extrabold text-gray-800 mb-6">Welcome Back</h2>
-
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold mb-4 flex items-center gap-2 border border-red-100">
           <BsFillExclamationDiamondFill size={16} /> {error}
@@ -104,15 +94,15 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#DEE33E] hover:bg-opacity-90 text-black font-bold py-3.5 rounded-2xl shadow-sm transition-all flex justify-center items-center gap-2 mt-4 text-sm disabled:opacity-50"
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-2xl shadow-sm shadow-red-600/30 transition-all flex justify-center items-center gap-2 mt-4 text-sm disabled:opacity-50"
         >
-          {loading ? <ImSpinner2 className="animate-spin text-lg" /> : "Sign in to account"}
+          {loading ? <ImSpinner2 className="animate-spin text-lg" /> : "Masuk Sekarang"}
         </button>
 
         <p className="text-center text-xs text-gray-400 pt-4">
-          Don't have an account yet?{" "}
-          <Link to="/register" className="text-[#DEE33E] font-bold hover:underline brightness-90">
-            Register Now
+          Belum punya akun?{" "}
+          <Link to="/register" className="text-red-600 font-bold hover:underline">
+            Daftar Sekarang
           </Link>
         </p>
       </form>

@@ -1,54 +1,110 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { FaPlus, FaSearch } from "react-icons/fa";
-import serviceData from "../data/Services.json"; 
+import { customerAPI } from "../services/userAPI";
+
+const normalizeBooking = (item, userMap) => ({
+  id: item.id || `${Date.now()}`,
+  orderId: `BG-00${item.id || Date.now()}`,
+  customerName: userMap?.[item.user_id] || item.kendaraan || "Pelanggan",
+  email: "-",
+  vehicle: item.kendaraan || "-",
+  plate: "-",
+  status: item.status || "booked",
+  orderDate: item.tanggal_booking ? item.tanggal_booking.substring(0, 10) : "-",
+  cost: parseFloat(item.total_harga) || 0,
+  mechanic: "Belum Ditentukan",
+  parts: [],
+  service: item.jenis_servis || "-",
+  complaint: item.keluhan || "",
+});
 
 export default function ServiceList() {
-  const [orders, setOrders] = useState(serviceData);
+  const [orders, setOrders] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ 
-    customerName: '', 
-    status: 'Paid', 
-    cost: '', 
-    orderDate: '', 
-    vehicle: '',
-    plate: '' 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [formData, setFormData] = useState({
+    customerName: "",
+    status: "Paid",
+    cost: "",
+    orderDate: "",
+    vehicle: "",
+    plate: "",
   });
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddOrder = (e) => {
-    e.preventDefault();
-    const newOrder = {
-      id: orders.length + 1, 
-      orderId: `BG-00${540 + orders.length + 1}`,
-      customerName: formData.customerName, // Sinkronisasi properti name
-      customer: formData.customerName,     // Cadangan sinkronisasi detail
-      email: formData.customerName.toLowerCase().replace(/\s/g, "") + "@gmail.com",
-      vehicle: formData.vehicle,
-      plate: formData.plate,
-      status: formData.status,
-      cost: parseInt(formData.cost),
-      revenue: parseInt(formData.cost).toLocaleString('id-ID'), // Sinkronisasi properti revenue
-      orderDate: new Date(formData.orderDate).toLocaleDateString('en-GB', { 
-        day: '2-digit', month: 'short', year: 'numeric' 
-      }),
-      date: new Date(formData.orderDate).toLocaleDateString('en-GB', { 
-        day: '2-digit', month: 'short', year: 'numeric' 
-      }),
-      mechanic: "Belum Ditentukan", 
-      parts: [] 
-    };
-    
-    setOrders([newOrder, ...orders]);
-    setShowModal(false);
-    setFormData({ customerName: '', status: 'Paid', cost: '', orderDate: '', vehicle: '', plate: '' });
+  const fetchBookings = async () => {
+    setIsLoading(true);
+    setLoadError(false);
+    try {
+      const [apiBookings, members] = await Promise.all([
+        customerAPI.getAllBookings(),
+        customerAPI.getAllMembers().catch(() => []),
+      ]);
+      const userMap = {};
+      (members || []).forEach((m) => { userMap[m.id] = m.fullName || m.email; });
+      const normalized = apiBookings.map((b) => normalizeBooking(b, userMap));
+      setOrders(normalized);
+    } catch (error) {
+      console.error("Gagal memuat data booking layanan:", error);
+      setLoadError(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const filteredOrders = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return orders.filter((item) => {
+      return [item.customerName, item.orderId, item.vehicle, item.plate, item.status, item.email]
+        .some((field) => String(field || "").toLowerCase().includes(lowerSearch));
+    });
+  }, [orders, searchTerm]);
+
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('id-ID', { 
-      style: 'currency', 
-      currency: 'IDR', 
-      minimumFractionDigits: 0 
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  const handleAddOrder = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitMessage("");
+
+    const payload = {
+      user_id: "0",
+      kendaraan: formData.vehicle,
+      jenis_servis: "Manual Service Order",
+      keluhan: formData.plate ? `Plate: ${formData.plate}` : "",
+      status: formData.status === "Paid" ? "completed" : "booked",
+      total_harga: parseInt(formData.cost, 10) || 0,
+      diskon_applied: 0,
+      tanggal_booking: formData.orderDate,
+    };
+
+    try {
+      const createdBooking = await customerAPI.createBooking(payload);
+      const normalized = normalizeBooking(createdBooking || payload);
+      setOrders([normalized, ...orders]);
+      setShowModal(false);
+      setFormData({ customerName: "", status: "Paid", cost: "", orderDate: "", vehicle: "", plate: "" });
+      setSubmitMessage("Berhasil menambah order baru ke backend.");
+    } catch (error) {
+      console.error("Gagal menambahkan order service:", error);
+      setSubmitMessage("Gagal menyimpan order baru. Silakan coba lagi.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -66,11 +122,20 @@ export default function ServiceList() {
             <div className="relative flex-1 sm:w-64">
               <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
               <input 
-                type="text" 
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, vehicle, or plate..." 
                 className="w-full bg-white text-gray-700 text-xs rounded-xl py-2.5 pl-10 pr-4 focus:outline-none border border-gray-100 focus:border-[#DEE33E] shadow-sm transition-all" 
               />
             </div>
+            <button
+              type="button"
+              onClick={fetchBookings}
+              className="hidden sm:inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-all"
+            >
+              Refresh
+            </button>
             <button 
               onClick={() => setShowModal(true)}
               className="bg-[#DEE33E] text-black px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-[#c2c72f] shadow-sm flex items-center gap-2 transition-all shrink-0"
@@ -94,13 +159,26 @@ export default function ServiceList() {
                   <th className="py-3 px-4 rounded-l-xl">Customer</th>
                   <th className="py-3 px-4">Order ID</th>
                   <th className="py-3 px-4">Vehicle Unit</th>
+                  <th className="py-3 px-4">Service</th>
                   <th className="py-3 px-4">Entry Date</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right rounded-r-xl">Revenue</th>
                 </tr>
               </thead>
               <tbody className="text-xs text-gray-700">
-                {orders.map((item) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="7" className="py-8 text-center text-gray-500">Memuat daftar service order...</td>
+                  </tr>
+                ) : loadError ? (
+                  <tr>
+                    <td colSpan="7" className="py-8 text-center text-red-500">Tidak dapat memuat data booking. Silakan coba refresh.</td>
+                  </tr>
+                ) : filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="py-8 text-center text-gray-500">Tidak ada order yang cocok dengan pencarian.</td>
+                  </tr>
+                ) : filteredOrders.map((item) => (
                   <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors group">
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
@@ -121,14 +199,16 @@ export default function ServiceList() {
                     <td className="py-4 px-4 font-mono font-bold text-gray-400">{item.orderId}</td>
                     <td className="py-4 px-4">
                       <p className="font-bold text-gray-800">{item.vehicle}</p>
-                      <p className="text-[10px] text-amber-600 font-extrabold mt-0.5 uppercase tracking-wide">{item.plate}</p>
                     </td>
-                    <td className="py-4 px-4 font-medium text-gray-500">{item.orderDate || item.date}</td>
+                    <td className="py-4 px-4 font-medium text-gray-600">{item.service}</td>
+                    <td className="py-4 px-4 font-medium text-gray-500">{item.orderDate}</td>
                     <td className="py-4 px-4">
                       <span className={`badge font-bold px-3 py-2 border ${
-                        item.status === 'Paid' ? 'bg-green-50 text-green-600 border-green-200' : 
-                        item.status === 'Refunded' ? 'bg-red-50 text-red-600 border-red-200' : 
-                        'bg-gray-50 text-gray-500 border-gray-200'
+                        item.status === 'completed' ? 'bg-green-50 text-green-600 border-green-200' : 
+                        item.status === 'cancelled' ? 'bg-red-50 text-red-600 border-red-200' : 
+                        item.status === 'in_progress' ? 'bg-purple-50 text-purple-600 border-purple-200' :
+                        item.status === 'booked' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                        'bg-amber-50 text-amber-600 border-amber-200'
                       }`}>
                         {item.status}
                       </span>

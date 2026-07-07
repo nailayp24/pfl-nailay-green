@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaCalendarCheck,
@@ -17,7 +17,8 @@ import {
   FaUserShield,
   FaWrench,
 } from "react-icons/fa";
-import heroImage from "../assets/hero.png";
+import heroImage from "../assets/hero.jpg";
+import { customerAPI } from "../services/userAPI";
 
 export default function GuestLanding() {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ export default function GuestLanding() {
   ]);
   const [chatInput, setChatInput] = useState("");
   const [chatTrigger, setChatTrigger] = useState(null);
+  const [promoCards, setPromoCards] = useState([]);
+  const [isLoadingPromos, setIsLoadingPromos] = useState(false);
 
   const accessBarrier = () => {
     alert("Akses Terbatas! Anda diwajibkan untuk masuk atau mendaftar.");
@@ -37,27 +40,6 @@ export default function GuestLanding() {
   const handleLoginTrigger = () => {
     navigate("/login");
   };
-
-  const promoCards = [
-    {
-      title: "Promo Member Baru",
-      desc: "Dapatkan diskon 10% untuk servis berkala pertama setelah daftar.",
-      action: "Lihat Promo",
-      type: "promo",
-    },
-    {
-      title: "Voucher Spooring",
-      desc: "Gratis pemeriksaan tekanan ban saat booking spoering pertama.",
-      action: "Gunakan Sekarang",
-      type: "voucher",
-    },
-    {
-      title: "Jadwal Cepat",
-      desc: "Booking cepat dengan prioritas slot untuk pelanggan terdaftar.",
-      action: "Login untuk Ambil",
-      type: "schedule",
-    },
-  ];
 
   const quickReplies = [
     { label: "Info Promo", value: "promo" },
@@ -110,7 +92,7 @@ export default function GuestLanding() {
   };
 
   const handlePromoAction = (promo) => {
-    alert(`🎯 Untuk menggunakan promo '${promo.title}', silakan masuk atau daftar terlebih dahulu.`);
+    alert(`Untuk menggunakan promo '${promo.title}', silakan masuk atau daftar terlebih dahulu.`);
     navigate("/login");
   };
 
@@ -118,28 +100,64 @@ export default function GuestLanding() {
     navigate("/register", { state: { roleDefault: "Member" } });
   };
 
+  const normalizePromo = (promo) => ({
+    title: promo.name || promo.title || promo.code || "Promo Tanpa Judul",
+    desc: promo.description || promo.desc || `Diskon ${promo.discount || "-"} sampai ${promo.exp_date || promo.expDate || "-"}`,
+    action: "Login untuk Klaim",
+    type: promo.type || promo.promo_type || "promo",
+  });
+
+  const fetchPromos = async () => {
+    setIsLoadingPromos(true);
+    try {
+      const apiPromos = await customerAPI.getAllPromos();
+      setPromoCards(apiPromos.map(normalizePromo));
+    } catch (error) {
+      console.error("Gagal memuat promo untuk GuestLanding:", error);
+      setPromoCards([]);
+    } finally {
+      setIsLoadingPromos(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPromos();
+    const promoInterval = setInterval(fetchPromos, 30000);
+    return () => clearInterval(promoInterval);
+  }, []);
+
   const features = [
     {
       icon: <FaCalendarCheck />,
-      title: "Booking tanpa antre",
-      desc: "Pilih jadwal servis dari rumah dan datang saat slot sudah siap.",
+      title: "Sistem Antrean Transparan",
+      desc: "Pilih jadwal servis dari rumah dan datang saat slot Anda sudah siap, tanpa antre di lokasi.",
+      tone: "amber",
     },
     {
       icon: <FaTools />,
-      title: "Pantau progres servis",
-      desc: "Status kendaraan lebih transparan dari masuk bengkel sampai selesai.",
+      title: "Pantau Progres Servis",
+      desc: "Status pengerjaan kendaraan terlihat jelas, dari masuk bengkel sampai selesai.",
+      tone: "red",
     },
     {
       icon: <FaShieldAlt />,
-      title: "Biaya lebih jelas",
-      desc: "Estimasi layanan dan riwayat transaksi membantu menghindari biaya mendadak.",
+      title: "Estimasi Biaya Akurat",
+      desc: "Rincian biaya diberikan di awal sehingga tidak ada tagihan mendadak di akhir.",
+      tone: "charcoal",
     },
     {
       icon: <FaUserShield />,
-      title: "Akses sesuai peran",
-      desc: "Member, kasir, mekanik, dan owner masuk ke dashboard yang sesuai kebutuhan.",
+      title: "Riwayat Servis Digital",
+      desc: "Setiap kunjungan tersimpan rapi, memudahkan mekanik memahami histori kendaraan Anda.",
+      tone: "amber",
     },
   ];
+
+  const featureToneClasses = {
+    amber: "bg-[#DEE33E]/25 text-[#5c5f10]",
+    red: "bg-red-100 text-red-700",
+    charcoal: "bg-[#1F2937]/10 text-[#1F2937]",
+  };
 
   const stats = [
     { value: "12", label: "unit aktif dipantau setiap hari" },
@@ -179,18 +197,25 @@ export default function GuestLanding() {
     },
   ];
 
-
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white font-outfit text-gray-900 scroll-smooth">
-      <header className="relative min-h-[92vh] overflow-hidden bg-gray-950 text-white">
-        <img
-          src={heroImage}
-          alt=""
-          className="absolute right-[-40px] top-24 hidden w-[560px] opacity-20 md:block"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,#030712_0%,rgba(3,7,18,0.92)_46%,rgba(3,7,18,0.68)_100%)]" />
+    <div className="min-h-screen overflow-x-hidden bg-white font-outfit text-[#1F2937] scroll-smooth">
+      <header className="relative min-h-[92vh] overflow-hidden bg-[#F8F9FA]">
+        {/* Foto asli full-width sebagai background hero */}
+        <div className="absolute inset-0">
+          <img
+            src={heroImage}
+            alt="Mekanik BengkelGo sedang menangani servis kendaraan"
+            className="h-full w-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-[#F8F9FA]" />
+        </div>
 
-        <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-gray-950/95 backdrop-blur-xl">
+        {/* Blob dekoratif tipis di atas foto */}
+        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#DEE33E]/20 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-40 h-96 w-96 rounded-full bg-red-200/20 blur-3xl" />
+
+        <nav className="fixed inset-x-0 top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5">
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -201,29 +226,30 @@ export default function GuestLanding() {
                 <FaWrench />
               </span>
               <span>
-                <span className="block text-sm font-black uppercase">BengkelGo</span>
-                <span className="block text-[10px] font-bold uppercase tracking-widest text-white/50">
+                <span className="block text-sm font-black uppercase text-[#1F2937]">BengkelGo</span>
+                <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Auto Service Center
                 </span>
               </span>
             </button>
 
-            <div className="hidden items-center gap-7 text-xs font-bold text-white/70 md:flex">
-              <a href="#fitur" className="hover:text-white">Fitur</a>
-              <a href="#bukti" className="hover:text-white">Bukti</a>
-              <a href="#faq" className="hover:text-white">FAQ</a>
+            <div className="hidden items-center gap-7 text-xs font-bold text-gray-500 md:flex">
+              <a href="#fitur" className="hover:text-[#1F2937]">Fitur</a>
+              <a href="#tentang" className="hover:text-[#1F2937]">Tentang</a>
+              <a href="#promo" className="hover:text-[#1F2937]">Promo</a>
+              <a href="#faq" className="hover:text-[#1F2937]">FAQ</a>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate("/login")}
-                className="hidden items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white/75 hover:bg-white/10 hover:text-white sm:flex"
+                className="hidden items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-600 transition-all duration-300 hover:bg-gray-100 hover:text-[#1F2937] sm:flex"
               >
                 <FaUserShield /> Masuk
               </button>
               <button
                 onClick={() => navigate("/register", { state: { roleDefault: "Member" } })}
-                className="hidden items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-black hover:bg-[#DEE33E] sm:flex"
+                className="hidden items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-black text-white transition-all duration-300 hover:scale-[1.02] hover:bg-red-700 sm:flex"
               >
                 <FaSignInAlt /> Daftar
               </button>
@@ -233,14 +259,14 @@ export default function GuestLanding() {
 
         <section className="relative z-10 mx-auto grid max-w-7xl gap-10 overflow-hidden px-6 pb-16 pt-28 md:grid-cols-[1.02fr_0.98fr] md:pb-20 md:pt-32">
           <div className="min-w-0 max-w-[calc(100vw-48px)] sm:max-w-3xl">
-            <span className="inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-[#DEE33E]/30 bg-[#DEE33E]/10 px-4 py-2 text-center text-[10px] font-black uppercase tracking-widest text-[#DEE33E] sm:text-[11px]">
+            <span className="inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-[#DEE33E]/50 bg-[#DEE33E]/20 px-4 py-2 text-center text-[10px] font-black uppercase tracking-widest text-[#5c5f10] sm:text-[11px]">
               <FaCar /> Untuk pemilik mobil dan tim bengkel
             </span>
-            <h1 className="mt-6 max-w-[calc(100vw-48px)] text-3xl font-black leading-[1.08] tracking-normal text-white sm:max-w-4xl sm:text-5xl lg:text-6xl">
+            <h1 className="mt-6 max-w-[calc(100vw-48px)] text-3xl font-black leading-[1.08] tracking-normal text-[#1F2937] sm:max-w-4xl sm:text-5xl lg:text-6xl">
               Service mobil lebih mudah
               <br className="sm:hidden" /> dari booking sampai selesai.
             </h1>
-            <p className="mt-6 max-w-[calc(100vw-48px)] text-base leading-8 text-white/68 sm:max-w-2xl md:text-lg">
+            <p className="mt-6 max-w-[calc(100vw-48px)] text-base leading-8 text-gray-500 sm:max-w-2xl md:text-lg">
               BengkelGo membantu pelanggan memesan jadwal dan melihat layanan.
               <span className="hidden sm:inline"> Tim bengkel mengelola operasional dari satu sistem.</span>
             </p>
@@ -248,38 +274,39 @@ export default function GuestLanding() {
             <div className="mt-8 flex max-w-[calc(100vw-48px)] flex-col gap-3 sm:max-w-none sm:flex-row">
               <button
                 onClick={accessBarrier}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#DEE33E] px-5 py-4 text-xs font-black uppercase text-black shadow-lg shadow-[#DEE33E]/20 hover:bg-[#cbd02f] sm:w-auto sm:px-7 sm:text-sm"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-red-600 px-5 py-4 text-xs font-black uppercase text-white shadow-lg shadow-red-600/25 transition-all duration-300 hover:scale-[1.02] hover:bg-red-700 sm:w-auto sm:px-7 sm:text-sm"
               >
                 Booking Servis Sekarang <FaChevronRight size={12} />
               </button>
               <button
                 onClick={accessBarrier}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 px-5 py-4 text-sm font-bold text-white hover:bg-white/10 sm:w-auto sm:px-7"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#1F2937]/15 bg-white px-5 py-4 text-sm font-bold text-[#1F2937] transition-all duration-300 hover:scale-[1.02] hover:border-[#DEE33E] hover:bg-[#DEE33E]/10 sm:w-auto sm:px-7"
               >
                 Pusat Pengaduan
               </button>
             </div>
 
-            <div className="mt-4 text-sm text-white/70">
-              Siap jadi member? <button onClick={handleSecondaryAction} className="font-black text-[#DEE33E] hover:text-white">Daftar Sekarang</button>
+            <div className="mt-4 text-sm text-gray-500">
+              Siap jadi member? <button onClick={handleSecondaryAction} className="font-black text-red-600 hover:text-red-700">Daftar Sekarang</button>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-4 text-xs font-bold text-white/72">
-              <span className="flex items-center gap-2"><FaCheckCircle className="text-[#DEE33E]" /> Part original</span>
-              <span className="flex items-center gap-2"><FaCheckCircle className="text-[#DEE33E]" /> Jadwal transparan</span>
-              <span className="flex items-center gap-2"><FaCheckCircle className="text-[#DEE33E]" /> Riwayat member</span>
+            <div className="mt-8 flex flex-wrap gap-4 text-xs font-bold text-gray-600">
+              <span className="flex items-center gap-2"><FaCheckCircle className="text-red-600" /> Part original</span>
+              <span className="flex items-center gap-2"><FaCheckCircle className="text-[#5c5f10]" /> Jadwal transparan</span>
+              <span className="flex items-center gap-2"><FaCheckCircle className="text-red-600" /> Riwayat member</span>
             </div>
           </div>
 
           <div className="hidden min-w-0 max-w-[calc(100vw-48px)] self-auto md:block md:max-w-none md:self-end">
-            <div className="w-full max-w-full rounded-[28px] border border-white/10 bg-white p-4 text-gray-900 shadow-2xl">
-              <div className="rounded-2xl bg-gray-950 p-4 text-white">
+            <div className="w-full max-w-full rounded-[28px] border border-gray-200 bg-white p-4 text-[#1F2937] shadow-2xl shadow-[#DEE33E]/10">
+              <div className="rounded-2xl bg-gradient-to-br from-[#1F2937] to-[#111827] p-4 text-white">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-[#DEE33E]">Live Workshop</p>
                     <h2 className="mt-1 text-lg font-black">Status Hari Ini</h2>
                   </div>
-                  <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-[10px] font-black text-emerald-300">
+                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-[10px] font-black text-emerald-300">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                     Buka
                   </span>
                 </div>
@@ -289,7 +316,7 @@ export default function GuestLanding() {
                   ["Brio BM 9012 CC", "Cek rem depan", "40%"],
                   ["NMAX BM 5678 NY", "Menunggu sparepart", "20%"],
                 ].map(([unit, job, progress]) => (
-                  <div key={unit} className="mb-3 min-w-0 rounded-xl bg-white/8 p-4">
+                  <div key={unit} className="mb-3 min-w-0 rounded-xl bg-white/10 p-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-black">{unit}</p>
@@ -299,7 +326,7 @@ export default function GuestLanding() {
                     </div>
                     <div className="mt-3 h-2 rounded-full bg-white/10">
                       <div
-                        className="h-2 rounded-full bg-[#DEE33E]"
+                        className="h-2 animate-pulse rounded-full bg-[#DEE33E]"
                         style={{ width: progress }}
                       />
                     </div>
@@ -308,17 +335,17 @@ export default function GuestLanding() {
               </div>
 
               <div className="grid grid-cols-3 gap-3 pt-4 text-center">
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xl font-black">12</p>
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Unit</p>
+                <div className="rounded-2xl bg-[#DEE33E]/15 p-4">
+                  <p className="text-xl font-black text-[#5c5f10]">12</p>
+                  <p className="text-[10px] font-bold uppercase text-gray-500">Unit</p>
                 </div>
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xl font-black">5</p>
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Mekanik</p>
+                <div className="rounded-2xl bg-red-50 p-4">
+                  <p className="text-xl font-black text-red-700">5</p>
+                  <p className="text-[10px] font-bold uppercase text-gray-500">Mekanik</p>
                 </div>
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xl font-black">3</p>
-                  <p className="text-[10px] font-bold uppercase text-gray-400">Slot</p>
+                <div className="rounded-2xl bg-[#F8F9FA] p-4">
+                  <p className="text-xl font-black text-[#1F2937]">3</p>
+                  <p className="text-[10px] font-bold uppercase text-gray-500">Slot</p>
                 </div>
               </div>
             </div>
@@ -330,22 +357,22 @@ export default function GuestLanding() {
         <section id="fitur" className="bg-white px-6 py-20">
           <div className="mx-auto max-w-7xl">
             <div className="max-w-2xl">
-              <p className="text-xs font-black uppercase tracking-widest text-[#9FA324]">Interest</p>
-              <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950 md:text-4xl">
-                Satu fitur, satu manfaat yang mudah dipahami.
+              <p className="text-xs font-black uppercase tracking-widest text-red-600">Layanan Unggulan</p>
+              <h2 className="mt-3 text-3xl font-black tracking-normal text-[#1F2937] md:text-4xl">
+                Servis yang bisa Anda pantau, bukan sekadar ditunggu.
               </h2>
               <p className="mt-4 text-sm leading-7 text-gray-500">
-                Landing page ini memecah manfaat BengkelGo menjadi kartu sederhana agar pengunjung cepat tahu nilai sistemnya.
+                Dari booking sampai kendaraan selesai dikerjakan, semua tahapan bisa Anda ikuti langsung lewat akun member.
               </p>
             </div>
 
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((feature) => (
-                <article key={feature.title} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:border-[#DEE33E] hover:shadow-md">
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[#DEE33E]/18 text-lg text-black">
+                <article key={feature.title} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#DEE33E] hover:shadow-lg">
+                  <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-xl text-lg ${featureToneClasses[feature.tone]}`}>
                     {feature.icon}
                   </div>
-                  <h3 className="text-base font-black text-gray-950">{feature.title}</h3>
+                  <h3 className="text-base font-black text-[#1F2937]">{feature.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-gray-500">{feature.desc}</p>
                 </article>
               ))}
@@ -353,24 +380,29 @@ export default function GuestLanding() {
           </div>
         </section>
 
-        <section id="bukti" className="bg-gray-50 px-6 py-20">
+        <section id="tentang" className="bg-[#F8F9FA] px-6 py-20">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-[#9FA324]">Desire</p>
-                <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950 md:text-4xl">
-                  Dibuat agar pelanggan percaya sebelum mengambil tindakan.
+                <p className="text-xs font-black uppercase tracking-widest text-red-600">Tentang</p>
+                <h2 className="mt-3 text-3xl font-black tracking-normal text-[#1F2937] md:text-4xl">
+                  Solusi digital untuk operasional bengkel dan kepuasan pelanggan.
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-gray-500">
-                  Statistik, testimoni, dan alur informasi yang ringkas mengurangi keraguan sebelum pengunjung melakukan booking atau registrasi.
+                  Informasi sistem booking, manajemen layanan, dan pengalaman pelanggan yang jelas untuk setiap kunjungan servis.
                 </p>
               </div>
 
               <div className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-3">
-                  {stats.map((stat) => (
-                    <div key={stat.value} className="rounded-2xl bg-white p-6 shadow-sm">
-                      <p className="text-3xl font-black text-gray-950">{stat.value}</p>
+                  {stats.map((stat, i) => (
+                    <div
+                      key={stat.value}
+                      className={`rounded-2xl p-6 shadow-sm ${
+                        i === 0 ? "bg-white border-t-4 border-[#DEE33E]" : i === 1 ? "bg-white border-t-4 border-red-500" : "bg-white border-t-4 border-[#1F2937]"
+                      }`}
+                    >
+                      <p className="text-3xl font-black text-[#1F2937]">{stat.value}</p>
                       <p className="mt-2 text-xs font-bold uppercase leading-5 text-gray-400">{stat.label}</p>
                     </div>
                   ))}
@@ -378,15 +410,15 @@ export default function GuestLanding() {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   {testimonials.map((item) => (
-                    <article key={item.name} className="rounded-2xl bg-white p-6 shadow-sm">
-                      <div className="mb-4 flex gap-1 text-[#9FA324]">
+                    <article key={item.name} className="rounded-2xl border-l-4 border-[#DEE33E] bg-white p-6 shadow-sm">
+                      <div className="mb-4 flex gap-1 text-[#DEE33E]">
                         {[...Array(5)].map((_, index) => (
                           <FaStar key={index} size={13} />
                         ))}
                       </div>
                       <p className="text-sm leading-7 text-gray-600">"{item.text}"</p>
                       <div className="mt-5 border-t border-gray-100 pt-4">
-                        <p className="text-sm font-black text-gray-950">{item.name}</p>
+                        <p className="text-sm font-black text-[#1F2937]">{item.name}</p>
                         <p className="text-xs font-bold text-gray-400">{item.car}</p>
                       </div>
                     </article>
@@ -399,47 +431,73 @@ export default function GuestLanding() {
 
         <section id="promo" className="bg-white px-6 py-20">
           <div className="mx-auto max-w-7xl">
-            <div className="max-w-2xl">
-              <p className="text-xs font-black uppercase tracking-widest text-[#9FA324]">Promo</p>
-              <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950 md:text-4xl">
-                Penawaran interaktif untuk memotivasi tindakan.
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-gray-500">
-                Klik kartu promo untuk melihat bagaimana sistem CRM BengkelGo mengarahkan Anda ke autentikasi dan klaim penawaran.
-              </p>
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
+              <div className="max-w-2xl">
+                <p className="text-xs font-black uppercase tracking-widest text-red-600">Promo</p>
+                <h2 className="mt-3 text-3xl font-black tracking-normal text-[#1F2937] md:text-4xl">
+                  Keuntungan Eksklusif Member BengkelGo.
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-gray-500">
+                  Login untuk mengklaim promo aktif bulan ini dan menyimpannya otomatis ke akun member Anda.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchPromos}
+                className="inline-flex items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-gray-50"
+              >
+                Refresh Promo
+              </button>
             </div>
 
             <div className="mt-10 grid gap-5 md:grid-cols-3">
-              {promoCards.map((promo) => (
-                <div key={promo.title} className="rounded-3xl border border-gray-100 bg-gray-50 p-6 shadow-sm">
-                  <h3 className="text-lg font-black text-gray-950">{promo.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-gray-500">{promo.desc}</p>
-                  <button
-                    onClick={() => handlePromoAction(promo)}
-                    className="mt-6 inline-flex items-center justify-center rounded-2xl bg-[#DEE33E] px-4 py-3 text-sm font-black uppercase text-black hover:bg-[#cbd02f]"
-                  >
-                    {promo.action}
-                  </button>
+              {isLoadingPromos ? (
+                <div className="rounded-3xl border border-gray-200 bg-[#F8F9FA] p-6 text-center text-sm text-gray-500 md:col-span-3">
+                  Memuat promo terbaru...
                 </div>
-              ))}
+              ) : promoCards.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-gray-300 bg-[#F8F9FA] p-6 text-center text-sm text-gray-500 md:col-span-3">
+                  Tidak ada promo aktif saat ini.
+                </div>
+              ) : (
+                promoCards.map((promo, i) => (
+                  <div
+                    key={promo.title}
+                    className={`rounded-3xl border p-6 shadow-sm ${
+                      i % 2 === 0
+                        ? "border-[#DEE33E]/40 bg-gradient-to-br from-[#DEE33E]/15 to-white"
+                        : "border-red-200 bg-gradient-to-br from-red-50 to-white"
+                    }`}
+                  >
+                    <h3 className="text-lg font-black text-[#1F2937]">{promo.title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-gray-500">{promo.desc}</p>
+                    <button
+                      onClick={() => handlePromoAction(promo)}
+                      className="mt-6 inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-black uppercase text-white transition-all duration-300 hover:scale-[1.02] hover:bg-red-700"
+                    >
+                      {promo.action}
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </section>
 
-        <section id="faq" className="bg-white px-6 py-20">
+        <section id="faq" className="bg-[#F8F9FA] px-6 py-20">
           <div className="mx-auto max-w-4xl">
             <div className="text-center">
-              <p className="text-xs font-black uppercase tracking-widest text-[#9FA324]">FAQ</p>
-              <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950 md:text-4xl">
+              <p className="text-xs font-black uppercase tracking-widest text-red-600">FAQ</p>
+              <h2 className="mt-3 text-3xl font-black tracking-normal text-[#1F2937] md:text-4xl">
                 Pertanyaan sebelum mulai
               </h2>
             </div>
 
-            <div className="mt-10 divide-y divide-gray-100 rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="mt-10 divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white shadow-sm">
               {faqs.map((faq) => (
                 <div key={faq.question} className="grid gap-3 p-6 md:grid-cols-[0.8fr_1.2fr] md:gap-8">
-                  <h3 className="flex items-start gap-3 text-sm font-black text-gray-950">
-                    <FaQuestionCircle className="mt-0.5 flex-shrink-0 text-[#9FA324]" />
+                  <h3 className="flex items-start gap-3 text-sm font-black text-[#1F2937]">
+                    <FaQuestionCircle className="mt-0.5 flex-shrink-0 text-red-600" />
                     {faq.question}
                   </h3>
                   <p className="text-sm leading-6 text-gray-500">{faq.answer}</p>
@@ -449,18 +507,20 @@ export default function GuestLanding() {
           </div>
         </section>
 
-        <section className="bg-gray-950 px-6 py-20 text-white">
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="text-xs font-black uppercase tracking-widest text-[#DEE33E]">Action</p>
-            <h2 className="mt-3 text-3xl font-black tracking-normal md:text-5xl">
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#DEE33E] via-[#e8ec6f] to-red-500 px-6 py-20">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
+          <div className="pointer-events-none absolute -left-10 bottom-0 h-56 w-56 rounded-full bg-[#1F2937]/10 blur-3xl" />
+          <div className="relative mx-auto max-w-4xl text-center">
+            <p className="text-xs font-black uppercase tracking-widest text-[#1F2937]/70">Mulai Sekarang</p>
+            <h2 className="mt-3 text-3xl font-black tracking-normal text-[#1F2937] md:text-5xl">
               Jadwalkan servis pertama Anda di BengkelGo.
             </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/60">
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-[#1F2937]/80">
               Mulai dari booking cepat, lalu lanjutkan sebagai member untuk menyimpan riwayat servis dan mendapatkan promo yang relevan.
             </p>
             <button
               onClick={accessBarrier}
-              className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#DEE33E] px-8 py-4 text-sm font-black uppercase text-black hover:bg-[#cbd02f]"
+              className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#1F2937] px-8 py-4 text-sm font-black uppercase text-white shadow-lg shadow-black/20 transition-all duration-300 hover:scale-[1.02] hover:bg-black"
             >
               Booking Servis Sekarang <FaChevronRight size={12} />
             </button>
@@ -476,7 +536,7 @@ export default function GuestLanding() {
                 <FaWrench />
               </span>
               <div>
-                <p className="text-sm font-black uppercase text-gray-950">BengkelGo</p>
+                <p className="text-sm font-black uppercase text-[#1F2937]">BengkelGo</p>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Auto Service Center
                 </p>
@@ -488,16 +548,16 @@ export default function GuestLanding() {
           </div>
 
           <div>
-            <h4 className="text-xs font-black uppercase tracking-widest text-gray-950">Navigasi</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-[#1F2937]">Navigasi</h4>
             <div className="mt-4 space-y-3 text-sm text-gray-500">
               <a href="#fitur" className="block hover:text-black">Fitur</a>
-              <a href="#bukti" className="block hover:text-black">Bukti</a>
+              <a href="#tentang" className="block hover:text-black">Tentang</a>
               <a href="#faq" className="block hover:text-black">FAQ</a>
             </div>
           </div>
 
           <div>
-            <h4 className="text-xs font-black uppercase tracking-widest text-gray-950">Aksi</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-[#1F2937]">Aksi</h4>
             <div className="mt-4 space-y-3 text-sm text-gray-500">
               <button onClick={accessBarrier} className="block hover:text-black">
                 Booking Servis
@@ -512,11 +572,11 @@ export default function GuestLanding() {
           </div>
 
           <div>
-            <h4 className="text-xs font-black uppercase tracking-widest text-gray-950">Alamat Resmi</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-[#1F2937]">Alamat Resmi</h4>
             <div className="mt-4 space-y-3 text-sm text-gray-500">
-              <p className="flex gap-2"><FaMapMarkerAlt className="mt-1 text-[#9FA324]" /> Jl. Rumbai No. 45, Pekanbaru</p>
-              <p className="flex gap-2"><FaPhone className="mt-1 text-[#9FA324]" /> 0812-3456-7890</p>
-              <p className="flex gap-2"><FaClock className="mt-1 text-[#9FA324]" /> Senin - Sabtu, 08.00 - 18.00 WIB</p>
+              <p className="flex gap-2"><FaMapMarkerAlt className="mt-1 text-red-600" /> Jl. Rumbai No. 45, Pekanbaru</p>
+              <p className="flex gap-2"><FaPhone className="mt-1 text-red-600" /> 0812-3456-7890</p>
+              <p className="flex gap-2"><FaClock className="mt-1 text-red-600" /> Senin - Sabtu, 08.00 - 18.00 WIB</p>
             </div>
           </div>
         </div>
@@ -525,14 +585,13 @@ export default function GuestLanding() {
         </p>
       </footer>
 
-
       <div className="fixed inset-x-0 bottom-6 z-40 flex items-end justify-end px-6">
         <div className="flex flex-col items-end gap-3">
           {isChatOpen && (
             <div className="max-w-sm rounded-[28px] border border-gray-200 bg-white p-4 shadow-2xl">
               <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-black text-gray-900">Asisten BengkelGo</p>
+                  <p className="text-sm font-black text-[#1F2937]">Asisten BengkelGo</p>
                   <p className="text-xs text-gray-500">Bantuan 24/7 sebelum daftar</p>
                 </div>
                 <button
@@ -547,7 +606,7 @@ export default function GuestLanding() {
                 {chatMessages.map((msg, index) => (
                   <div
                     key={index}
-                    className={`max-w-[90%] rounded-2xl p-3 text-sm ${msg.sender === "bot" ? "bg-gray-100 text-gray-900 self-start" : "bg-[#DEE33E]/20 text-gray-900 self-end"}`}
+                    className={`max-w-[90%] rounded-2xl p-3 text-sm ${msg.sender === "bot" ? "bg-gray-100 text-[#1F2937] self-start" : "bg-[#DEE33E]/25 text-[#1F2937] self-end"}`}
                   >
                     {msg.text}
                   </div>
@@ -559,11 +618,11 @@ export default function GuestLanding() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Tulis pertanyaan..."
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-[#9FA324]"
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-red-500"
                 />
                 <button
                   type="submit"
-                  className="rounded-2xl bg-[#DEE33E] px-4 py-2 text-xs font-black uppercase text-black hover:bg-[#cbd02f]"
+                  className="rounded-2xl bg-red-600 px-4 py-2 text-xs font-black uppercase text-white transition-all duration-300 hover:scale-[1.02] hover:bg-red-700"
                 >
                   Kirim
                 </button>
@@ -580,11 +639,11 @@ export default function GuestLanding() {
                 ))}
               </div>
               {chatTrigger && (
-                <div className="mt-4 rounded-2xl border border-[#DEE33E] bg-[#FEFFEA] p-3 text-sm text-gray-900">
+                <div className="mt-4 rounded-2xl border border-[#DEE33E] bg-[#FEFFEA] p-3 text-sm text-[#1F2937]">
                   <p className="mb-3 font-bold">Akses khusus member diperlukan</p>
                   <button
                     onClick={chatTrigger.action}
-                    className="inline-flex w-full items-center justify-center rounded-2xl bg-[#DEE33E] px-4 py-3 text-sm font-black uppercase text-black hover:bg-[#cbd02f]"
+                    className="inline-flex w-full items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-black uppercase text-white transition-all duration-300 hover:scale-[1.02] hover:bg-red-700"
                   >
                     {chatTrigger.label}
                   </button>
@@ -594,14 +653,13 @@ export default function GuestLanding() {
           )}
           <button
             onClick={() => setIsChatOpen((prev) => !prev)}
-            className="inline-flex items-center gap-3 rounded-full bg-[#DEE33E] px-5 py-3 text-sm font-black text-black shadow-2xl shadow-[#DEE33E]/20"
+            className="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-[#DEE33E] to-red-500 px-5 py-3 text-sm font-black text-[#1F2937] shadow-2xl shadow-red-500/20 transition-all duration-300 hover:scale-[1.02]"
           >
             <FaQuestionCircle />
             {isChatOpen ? "Tutup Bantuan" : "Bantuan 24/7"}
           </button>
         </div>
       </div>
-
     </div>
   );
 }

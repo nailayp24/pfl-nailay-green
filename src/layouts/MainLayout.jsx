@@ -1,19 +1,15 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
 
 export default function MainLayout() {
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA] font-outfit w-full overflow-hidden">
-      {/* Membungkus Sidebar agar ukurannya solid dan tidak mengecil/hilang saat error */}
-      <div className="w-[256px] flex-shrink-0">
-        <Sidebar />
-      </div>
-      
-      {/* Area konten utama sebelah kanan */}
-      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
-        <Header />
-        <main className="flex-1 p-8 overflow-y-auto bg-[#F8F9FA]">
+    <div className="flex min-h-screen bg-[#F8F9FA] font-outfit w-full">
+      {/* Sidebar handles its own responsive behavior (hamburger on mobile) */}
+      <Sidebar />
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 p-4 md:p-8 pt-16 lg:pt-8 overflow-y-auto bg-[#F8F9FA]">
           <Outlet />
         </main>
       </div>

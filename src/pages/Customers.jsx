@@ -1,120 +1,264 @@
-import { useState } from "react";
-import { FaSearch, FaFilter, FaPlus, FaTimes, FaUserFriends, FaCalendarCheck, FaExclamationTriangle, FaBullhorn, FaEnvelope, FaWhatsapp, FaTicketAlt } from "react-icons/fa";
+﻿import { useEffect, useState } from "react";
+import { FaSearch, FaFilter, FaPlus, FaTimes, FaUserFriends, FaCalendarCheck, FaExclamationTriangle, FaBullhorn, FaEnvelope, FaWhatsapp, FaTicketAlt, FaTrash, FaEdit } from "react-icons/fa";
 import Container from "../components/Container";
 import PageHeader from "../components/PageHeader";
 import { useNavigate } from "react-router-dom";
+import { customerAPI } from "../services/userAPI";
+import { toPointNumber } from "../utils/membership";
 
 export default function Customers() {
   const navigate = useNavigate();
 
-  // 1. State Menu Tab Aktif (Default ke list data Customer Utama)
+  // Get user role from session
+  const userSession = JSON.parse(localStorage.getItem("user_session"));
+  const userRole = userSession?.role || "";
+  const canDelete = userRole === "Owner"; // Only Owner can delete
+
   const [activeTab, setActiveTab] = useState("customer-list");
-
-  // 2. State Modal Tambah Customer Walk-In
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
   const [newCustomer, setNewCustomer] = useState({
-    name: "", phone: "", email: "", address: "", levelMembership: "Regular Member", unitMobil: "", platNomor: ""
+    name: "", phone: "", email: "", address: "", levelMembership: "Regular Member", unitMobil: "", platNomor: "", points: "0"
   });
-
-  // 3. State Form Tambah Diskon/Promo Baru oleh Admin
   const [newPromo, setNewPromo] = useState({ code: "", name: "", discount: "", expDate: "", type: "Kupon" });
-
-  // 4. State Teks Broadcast CRM Automation
   const [broadcastMessage, setBroadcastMessage] = useState(
     "Halo Pelanggan Setia BengkelGo Mobil! Nikmati diskon spesial 25% untuk layanan Spooring, Balancing, dan General Check-Up khusus minggu ini. Yuk booking antrean Anda sekarang!"
   );
+  const [customerData, setCustomerData] = useState([]);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
+  const [promoData, setPromoData] = useState([]);
+  const [isLoadingPromos, setIsLoadingPromos] = useState(false);
+  const [deletingMemberId, setDeletingMemberId] = useState(null);
+  const [deletingPromoId, setDeletingPromoId] = useState(null);
 
-  // 5. DATA TABEL 1: MASTER REKAP DATA PELANGGAN & MOBIL
-  const [customerData, setCustomerData] = useState([
-    { 
-      id: "BG-MOB-001", name: "Ahmad Subarjo", username: "ahmad_barjo", gender: "Laki-laki",
-      birthDate: "14 Mei 1998", phone: "081234567890", email: "ahmadsubarjo@gmail.com", 
-      address: "Jl. Sudirman No. 45", location: "Pekanbaru, Riau", socialMedia: "@ahmad.barjo",
-      regDate: "12 Jan 2025", levelMembership: "Platinum Member", statusAktif: "Aktif",
-      interactionChat: "Tanya stok Oli Shell Helix Ultra", complaint: "Tidak ada", ticketHelp: "#TK-8821 (Closed)",
-      feedback: "Spooring balancing-nya presisi banget!", lastLogin: "15 Juni 2026 14:25", device: "Samsung Galaxy A35",
-      loginLocation: "Pekanbaru Kota", appActivity: "Cek Biaya Service AC", duration: "12 Menit",
-      userSource: "Instagram Ads", campaign: "Promo Mudik Nyaman", giveaway: "Tidak Ikut",
-      promoStatus: "Kupon Diskon 20% Terpakai", spent: "Rp 4.850.000", paymentMethod: "QRIS BRK",
-      lastProduct: "Toyota Avanza - BM 1234 NQ (Ganti Oli & Filter)", lastTxDate: "15 Juni 2026"
-    },
-    { 
-      id: "BG-MOB-002", name: "Rian Hidayat", username: "rian_hdayat", gender: "Laki-laki",
-      birthDate: "22 Nov 2001", phone: "085298765432", email: "rianhidayat@gmail.com", 
-      address: "Jl. Tuanku Tambusai No. 12", location: "Siak, Riau", socialMedia: "@rian.hdayat",
-      regDate: "20 Feb 2025", levelMembership: "Gold Member", statusAktif: "Aktif",
-      interactionChat: "Tanya harga Kampas Rem Depan", complaint: "Rem bunyi berdecit", ticketHelp: "#TK-8901 (Resolved)",
-      feedback: "Mekanik ramah dan edukatif", lastLogin: "14 Juni 2026 09:15", device: "Apple iPhone 14",
-      loginLocation: "Kecamatan Siak", appActivity: "Booking Antrean Montir", duration: "8 Menit",
-      userSource: "Rekomendasi Teman", campaign: "Perawatan Rutin", giveaway: "Ikut (Undian Ban Mobil)",
-      promoStatus: "Tidak Ada Promo", spent: "Rp 1.245.000", paymentMethod: "Transfer Bank",
-      lastProduct: "Honda Jazz - BM 8891 AA (Ganti Kampas Rem)", lastTxDate: "14 Juni 2026"
-    }
-  ]);
+  // Edit member modal
+  const [editMemberModal, setEditMemberModal] = useState(null);
+  const [editMemberForm, setEditMemberForm] = useState({});
+  const [isEditingMember, setIsEditingMember] = useState(false);
 
-  // DATA TABEL 2: LOG LOGISTIK DATA BOOKING ANTREAN MASUK
-  const [bookingLogData] = useState([
-    { id: "BK-MOB-901", nama: "Ahmad Subarjo", mobil: "Toyota Avanza (BM 1234 NQ)", tglJadwal: "18 Juni 2026 10:00", paket: "Ganti Oli Premium", status: "Terjadwal" },
-    { id: "BK-MOB-902", nama: "Rian Hidayat", mobil: "Honda Jazz (BM 8891 AA)", tglJadwal: "14 Juni 2026 13:30", paket: "Spooring Precision", status: "Selesai" }
-  ]);
+  // Edit promo modal
+  const [editPromoModal, setEditPromoModal] = useState(null);
+  const [editPromoForm, setEditPromoForm] = useState({});
+  const [isEditingPromo, setIsEditingPromo] = useState(false);
 
-  // DATA TABEL 3: LOG DATA TIKET KOMPLAIN MASUK
-  const [complaintLogData] = useState([
-    { id: "TK-COMP-55", nama: "Rian Hidayat", kategori: "Hasil Kerja Mekanik", isi: "Rem depan berdecit kasar pasca ganti part", tglLapor: "14 Juni 2026", status: "Resolved" },
-    { id: "TK-COMP-56", nama: "Siti Aminah", kategori: "Pelayanan Staff", isi: "Ruang tunggu AC-nya kurang berasa dingin", tglLapor: "15 Juni 2026", status: "Open" }
-  ]);
-
-  // DATA TABEL 4: DATA MASTER DISKON & PROMO YANG DIKELOLA ADMIN
-  const [promoData, setPromoData] = useState([
-    { id: "PRM-001", code: "BENGKELGOMUDIK", name: "Diskon Mudik Nyaman Shell", discount: "20%", expDate: "2026-06-30", type: "Kupon" },
-    { id: "PRM-002", code: "SPOORINGFREE", name: "Potongan Member Baru Spooring", discount: "Rp 50.000", expDate: "2026-07-10", type: "Voucher" }
-  ]);
-
-  // Handlers Input Change
   const handleInputChange = (e) => setNewCustomer({ ...newCustomer, [e.target.name]: e.target.value });
   const handlePromoInputChange = (e) => setNewPromo({ ...newPromo, [e.target.name]: e.target.value });
-  
-  const handleBroadcast = (channel) => alert(`📢 [CRM AUTOMATION] Berhasil mengirimkan broadcast via ${channel.toUpperCase()} ke semua member!`);
+  const handleBroadcast = (channel) => alert(`ðŸ“¢ [CRM AUTOMATION] Berhasil mengirimkan broadcast via ${channel.toUpperCase()} ke semua member!`);
 
-  // Submit Tambah Customer Baru (Walk-In)
-  const handleAddCustomerSubmit = (e) => {
-    e.preventDefault();
-    const idBaru = `BG-MOB-00${customerData.length + 1}`;
-    const tanggalHariIni = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "Short", year: "numeric" });
+  const normalizeMember = (member) => ({
+    id: member.id || member.user_id || member.uuid || "BG-000",
+    name: member.fullName || member.full_name || member.name || "Unknown Member",
+    username: member.email ? member.email.split("@")[0] : "unknown_user",
+    phone: member.phone || "-",
+    email: member.email || "-",
+    address: member.address || "-",
+    levelMembership: member.tier || "Bronze",
+    statusAktif: "Aktif",
+    points: 0,
+    lastProduct: member.last_product || "-",
+    userSource: member.user_source || "Database",
+    promoStatus: "Tidak Ada Promo",
+    regDate: member.created_at || "-",
+  });
 
-    const customerBaruData = {
-      id: idBaru, name: newCustomer.name, username: newCustomer.name.toLowerCase().replace(/\s+/g, "_"),
-      gender: "Laki-laki", birthDate: "-", phone: newCustomer.phone, email: newCustomer.email,
-      address: newCustomer.address, location: "Pekanbaru, Riau", socialMedia: "-", regDate: tanggalHariIni,
-      levelMembership: newCustomer.levelMembership, statusAktif: "Aktif", interactionChat: "Entri manual kasir",
-      complaint: "Tidak ada", ticketHelp: "-", feedback: "-", lastLogin: "-", device: "-", loginLocation: "-",
-      appActivity: "-", duration: "-", userSource: "Walk-In", campaign: "-", giveaway: "Tidak Ikut",
-      promoStatus: "Tidak Ada Promo", spent: "Rp 0", paymentMethod: "-",
-      lastProduct: `${newCustomer.unitMobil} - ${newCustomer.platNomor}`, lastTxDate: tanggalHariIni
+  const normalizePromo = (promo) => {
+    const desc = promo.deskripsi || "";
+    const parts = desc.split(" | ");
+    return {
+      id: promo.id || "PRM-000",
+      code: parts[0] || promo.nama_produk || "Product",
+      name: promo.nama_produk || "Produk",
+      discount: promo.harga || 0,
+      expDate: parts[2]?.replace("Exp: ", "") || "-",
+      type: parts[1] || "Produk",
     };
-
-    setCustomerData([...customerData, customerBaruData]);
-    setNewCustomer({ name: "", phone: "", email: "", address: "", levelMembership: "Regular Member", unitMobil: "", platNomor: "" });
-    setIsModalOpen(false);
-    alert("Pelanggan baru berhasil tersimpan ke baris database!");
   };
 
-  // Submit Tambah Diskon/Promo Baru oleh Admin
-  const handleAddPromoSubmit = (e) => {
-    e.preventDefault();
-    const idPromoBaru = `PRM-00${promoData.length + 1}`;
-    const promoBaruData = {
-      id: idPromoBaru,
-      code: newPromo.code.toUpperCase().replace(/\s+/g, ""),
-      name: newPromo.name,
-      discount: newPromo.discount,
-      expDate: newPromo.expDate,
-      type: newPromo.type
-    };
+  const fetchPromos = async () => {
+    setIsLoadingPromos(true);
+    try {
+      const apiPromos = await customerAPI.getAllPromos();
+      setPromoData(apiPromos.map(normalizePromo));
+    } catch (err) {
+      console.error("Gagal memuat data promo Supabase:", err);
+      setPromoData([]);
+    } finally {
+      setIsLoadingPromos(false);
+    }
+  };
 
-    setPromoData([...promoData, promoBaruData]);
-    setNewPromo({ code: "", name: "", discount: "", expDate: "", type: "Kupon" });
-    alert("📢 Sukses! Kode Diskon & Voucher Promo Baru Berhasil Diaktifkan di Sistem Admin!");
+  const fetchCustomers = async () => {
+    setIsLoadingCustomers(true);
+    try {
+      const apiMembers = await customerAPI.getAllMembers();
+      setCustomerData(apiMembers.map(normalizeMember));
+    } catch (err) {
+      console.error("Gagal memuat data customer Supabase:", err);
+      setCustomerData([]);
+    } finally {
+      setIsLoadingCustomers(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+    fetchPromos();
+  }, []);
+
+  // CRUD: Create Member
+  const handleAddCustomerSubmit = async (e) => {
+    e.preventDefault();
+    const pointsValue = toPointNumber(newCustomer.points);
+    const payload = {
+      fullName: newCustomer.name,
+      email: newCustomer.email,
+      role: "Member",
+      tier: "Bronze",
+    };
+    try {
+      const createdMember = await customerAPI.createMember(payload);
+      if (createdMember) {
+        setCustomerData([...customerData, normalizeMember(createdMember)]);
+        alert("Pelanggan baru berhasil disimpan!");
+      }
+    } catch (err) {
+      console.error("Gagal menyimpan customer baru:", err);
+      alert("Gagal menyimpan customer baru. Periksa koneksi.");
+    } finally {
+      setNewCustomer({ name: "", phone: "", email: "", address: "", levelMembership: "Regular Member", unitMobil: "", platNomor: "", points: "0" });
+      setIsModalOpen(false);
+    }
+  };
+
+  // CRUD: Delete Member
+  const handleDeleteMember = async (memberId) => {
+    if (!window.confirm("Yakin ingin menghapus data member ini?")) return;
+    setDeletingMemberId(memberId);
+    try {
+      await customerAPI.deleteMember(memberId);
+      setCustomerData((current) => current.filter((c) => c.id !== memberId));
+    } catch (err) {
+      console.error("Gagal menghapus member:", err);
+      alert("Gagal menghapus member.");
+    } finally {
+      setDeletingMemberId(null);
+    }
+  };
+
+  // CRUD: Edit Member
+  const openEditMember = (member) => {
+    setEditMemberModal(member);
+    setEditMemberForm({
+      fullName: member.name,
+      email: member.email === "-" ? "" : member.email,
+      tier: member.levelMembership || "Bronze"
+    });
+  };
+
+  const handleEditMemberSubmit = async (e) => {
+    e.preventDefault();
+    if (!editMemberModal) return;
+    setIsEditingMember(true);
+    try {
+      const payload = {
+        fullName: editMemberForm.fullName,
+        email: editMemberForm.email,
+        tier: editMemberForm.tier,
+      };
+      await customerAPI.updateMember(editMemberModal.id, payload);
+      setCustomerData((current) =>
+        current.map((c) =>
+          c.id === editMemberModal.id
+            ? { ...c, name: payload.fullName, email: payload.email || "-", levelMembership: payload.tier }
+            : c
+        )
+      );
+      setEditMemberModal(null);
+    } catch (err) {
+      console.error("Gagal mengupdate member:", err);
+      alert("Gagal menyimpan perubahan member.");
+    } finally {
+      setIsEditingMember(false);
+    }
+  };
+
+  // CRUD: Create Promo
+  const handleAddPromoSubmit = async (e) => {
+    e.preventDefault();
+    const promoPayload = {
+      nama_produk: newPromo.name || "Promo",
+      harga: parseFloat(newPromo.discount) || 0,
+      stok: 0,
+      deskripsi: `${newPromo.code?.toUpperCase()?.replace(/\s+/g, "") || "PROMO"} | ${newPromo.type} | Exp: ${newPromo.expDate}`,
+    };
+    console.log("Promo payload:", promoPayload);
+    try {
+      const createdPromo = await customerAPI.createPromo(promoPayload);
+      if (createdPromo) {
+        setPromoData([...promoData, normalizePromo(createdPromo)]);
+        alert("Kode Promo berhasil tersimpan!");
+      }
+    } catch (err) {
+      console.error("Gagal menyimpan promo baru:", err);
+      console.error("Error response:", err.response?.data);
+      alert(`Gagal menyimpan promo: ${err.response?.data?.message || err.message || "Unknown error"}`);
+    } finally {
+      setNewPromo({ code: "", name: "", discount: "", expDate: "", type: "Kupon" });
+    }
+  };
+
+  // CRUD: Delete Promo
+  const handleDeletePromo = async (promoId) => {
+    if (!window.confirm("Yakin ingin menghapus promo ini?")) return;
+    setDeletingPromoId(promoId);
+    try {
+      await customerAPI.deletePromo(promoId);
+      setPromoData((current) => current.filter((p) => p.id !== promoId));
+    } catch (err) {
+      console.error("Gagal menghapus promo:", err);
+      alert("Gagal menghapus promo.");
+    } finally {
+      setDeletingPromoId(null);
+    }
+  };
+
+  // CRUD: Edit Promo
+  const openEditPromo = (promo) => {
+    setEditPromoModal(promo);
+    setEditPromoForm({
+      code: promo.code,
+      name: promo.name,
+      discount: promo.discount,
+      expDate: promo.expDate === "-" ? "" : promo.expDate,
+      type: promo.type,
+    });
+  };
+
+  const handleEditPromoSubmit = async (e) => {
+    e.preventDefault();
+    if (!editPromoModal) return;
+    setIsEditingPromo(true);
+    try {
+      const payload = {
+        nama_produk: editPromoForm.name || "Promo",
+        harga: parseFloat(editPromoForm.discount) || 0,
+        deskripsi: `${editPromoForm.code?.toUpperCase()?.replace(/\s+/g, "") || "PROMO"} | ${editPromoForm.type} | Exp: ${editPromoForm.expDate}`,
+      };
+      await customerAPI.updatePromo(editPromoModal.id, payload);
+      setPromoData((current) =>
+        current.map((p) =>
+          p.id === editPromoModal.id
+            ? normalizePromo({ ...p, ...payload })
+            : p
+        )
+      );
+      setEditPromoModal(null);
+    } catch (err) {
+      console.error("Gagal mengupdate promo:", err);
+      alert("Gagal menyimpan perubahan promo.");
+    } finally {
+      setIsEditingPromo(false);
+    }
   };
 
   return (
@@ -122,52 +266,32 @@ export default function Customers() {
       <Container>
         <PageHeader title="Manajemen &amp; CRM Pelanggan" breadcrumb="Dashboard / CRM Terpadu" />
 
-        {/* BARIS TOMBOL NAVIGASI TAB SUB-MENU */}
-        <div className="flex flex-wrap gap-2 mt-8 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm w-fit">
-          <button
-            onClick={() => setActiveTab("customer-list")}
-            className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${
-              activeTab === "customer-list" ? "bg-black text-white" : "text-gray-500 hover:bg-gray-50"
-            }`}
-          >
+        {/* NAV TABS */}
+        <div className="flex flex-wrap gap-2 mt-8 items-center">
+          <button onClick={() => setActiveTab("customer-list")} className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${activeTab === "customer-list" ? "bg-black text-white" : "bg-white text-black border border-gray-200 hover:bg-gray-50"}`}>
             <FaUserFriends /> Data Customer
           </button>
-          <button
-            onClick={() => setActiveTab("booking-log")}
-            className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${
-              activeTab === "booking-log" ? "bg-black text-white" : "text-gray-500 hover:bg-gray-50"
-            }`}
-          >
-            <FaCalendarCheck /> Log Booking Antrean
+          <button onClick={() => navigate("/admin/bookings")} className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-white text-black border border-gray-200 hover:bg-gray-50 transition-all">
+            <FaCalendarCheck /> Data Pesanan
           </button>
-          <button
-            onClick={() => setActiveTab("complaint-log")}
-            className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${
-              activeTab === "complaint-log" ? "bg-black text-white" : "text-gray-500 hover:bg-gray-50"
-            }`}
-          >
-            <FaExclamationTriangle /> Log Komplain Aduan
+          <button onClick={() => navigate("/admin/complaints")} className="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-white text-black border border-gray-200 hover:bg-gray-50 transition-all">
+            <FaExclamationTriangle /> Data Komplain
           </button>
-          <button
-            onClick={() => setActiveTab("manage-promo")}
-            className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${
-              activeTab === "manage-promo" ? "bg-black text-white" : "text-gray-500 hover:bg-gray-50"
-            }`}
-          >
+          <button onClick={() => setActiveTab("manage-promo")} className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${activeTab === "manage-promo" ? "bg-[#DEE33E] text-black" : "text-gray-500 bg-gray-50 hover:text-black hover:bg-gray-100"}`}>
             <FaTicketAlt /> Kelola Diskon &amp; Promo
           </button>
         </div>
 
-        {/* SUB-MENU TABEL 1: MASTER DATA PELANGGAN UTAMA ADMIN */}
+        {/* TAB: CUSTOMER LIST */}
         {activeTab === "customer-list" && (
-          <div className="space-y-6 mt-4 animate-fade-in">
-            {/* PANEL CRM AUTOMATION HUB */}
+          <div className="space-y-6 mt-4">
+            {/* CRM BROADCAST */}
             <div className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-2 bg-[#DEE33E]/20 rounded-lg"><FaBullhorn className="text-gray-800" size={14} /></div>
                 <div>
                   <h4 className="text-xs font-black text-gray-800 uppercase tracking-wider">CRM Automation &amp; Broadcast Hub</h4>
-                  <p className="text-[11px] text-gray-400">Kirim pemberitahuan massal otomatis ke pelanggan terdata berdasarkan preferensi kontak.</p>
+                  <p className="text-[11px] text-gray-400">Kirim pemberitahuan massal otomatis ke pelanggan.</p>
                 </div>
               </div>
               <div className="space-y-3 mt-4">
@@ -179,75 +303,70 @@ export default function Customers() {
               </div>
             </div>
 
-            {/* TABEL MASTER PELANGGAN */}
+            {/* CUSTOMER TABLE */}
             <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-gray-100 shadow-sm">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-gray-50 pb-6">
                 <div>
-                  <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">Lembar Basis Data Hubungan Pelanggan</h3>
-                  <p className="text-xs text-gray-400 mt-1">Daftar rekam medis operasional kendaraan unit mobil BengkelGo.</p>
+                  <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">Basis Data Pelanggan</h3>
+                  <p className="text-xs text-gray-400 mt-1">Data member terhubung Supabase - CRUD lengkap (Tambah, Edit, Hapus).</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                   <div className="relative flex-1 md:w-64">
                     <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-                    <input type="text" placeholder="Cari nama, plat mobil, device..." className="w-full bg-gray-50 text-gray-700 text-xs rounded-xl py-2.5 pl-10 pr-4 focus:outline-none border border-gray-200 focus:border-[#DEE33E]" />
+                    <input value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} type="text" placeholder="Cari nama, email, telp..." className="w-full bg-gray-50 text-gray-700 text-xs rounded-xl py-2.5 pl-10 pr-4 focus:outline-none border border-gray-200 focus:border-[#DEE33E]" />
                   </div>
-                  <button className="border border-gray-200 text-gray-600 p-2.5 rounded-xl text-xs bg-gray-50"><FaFilter /></button>
+                  <button type="button" onClick={fetchCustomers} className="border border-gray-200 text-gray-600 p-2.5 rounded-xl text-xs bg-gray-50 hover:bg-gray-100">Refresh</button>
                   <button onClick={() => setIsModalOpen(true)} className="bg-black hover:bg-gray-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-2 uppercase tracking-wider"><FaPlus size={10} /> Tambah Customer</button>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-separate border-spacing-y-4 min-w-[1350px]">
+                <table className="w-full text-left border-separate border-spacing-y-3 min-w-[900px]">
                   <thead>
-                    <tr className="text-gray-400 text-[11px] font-bold uppercase tracking-wider bg-gray-50/50">
-                      <th className="py-3 px-4 rounded-l-xl">Identitas &amp; Akun</th>
-                      <th className="py-3 px-4">Kontak &amp; Alamat</th>
-                      <th className="py-3 px-4">Membership Tier</th>
-                      <th className="py-3 px-4">Interaksi &amp; Keluhan</th>
-                      <th className="py-3 px-4">Aktivitas &amp; Device</th>
-                      <th className="py-3 px-4">Sumber Marketing</th>
-                      <th className="py-3 px-4 text-right rounded-r-xl pr-6">Unit Mobil &amp; Transaksi</th>
+                    <tr className="text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-gray-50/50">
+                      <th className="py-3 px-4 rounded-l-xl">Nama &amp; Email</th>
+                      <th className="py-3 px-4">Telepon</th>
+                      <th className="py-3 px-4">Tier &amp; Poin</th>
+                      <th className="py-3 px-4">Kendaraan</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-center rounded-r-xl">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="text-xs text-gray-700">
-                    {customerData.map((cust) => (
-                      /* FIX UTAMA: Menambahkan navigasi detail baris onClick dan style hover pointer */
-                      <tr 
-                        key={cust.id} 
-                        onClick={() => navigate(`/members/${cust.id}`)}
-                        className="bg-white hover:bg-gray-50 hover:scale-[1.002] cursor-pointer transition-all duration-200 shadow-sm rounded-xl border border-gray-100/50"
-                      >
-                        <td className="py-4 px-4 font-bold rounded-l-xl border-l border-y border-gray-100/40">
+                    {isLoadingCustomers ? (
+                      <tr><td colSpan="6" className="py-8 text-center text-gray-500">Memuat data pelanggan...</td></tr>
+                    ) : customerData
+                      .filter((cust) => {
+                        const search = customerSearch.toLowerCase();
+                        return cust.name.toLowerCase().includes(search) || cust.email.toLowerCase().includes(search) || cust.phone.toLowerCase().includes(search);
+                      })
+                      .map((cust) => (
+                      <tr key={cust.id} className="bg-white hover:bg-gray-50 transition-all shadow-sm rounded-xl border border-gray-100/50">
+                        <td className="py-4 px-4 rounded-l-xl">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center font-black text-gray-600 shadow-inner">{cust.name.charAt(0)}</div>
+                            <div className="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center font-black text-gray-600">{cust.name.charAt(0)}</div>
                             <div>
-                              <p className="font-black text-sm text-gray-800 leading-none mb-1">{cust.name}</p>
-                              <p className="text-[10px] text-gray-400">@{cust.username}</p>
-                              <p className="text-[9px] text-amber-600 font-mono mt-0.5">{cust.id}</p>
+                              <p className="font-black text-sm text-gray-800 cursor-pointer hover:text-[#9FA324]" onClick={() => navigate(`/members/${cust.id}`)}>{cust.name}</p>
+                              <p className="text-[10px] text-gray-400">{cust.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 px-4 border-y border-gray-100/40">
-                          <p className="font-extrabold text-gray-700">{cust.phone}</p>
-                          <p className="text-[10px] text-gray-500">{cust.address}</p>
-                        </td>
-                        <td className="py-4 px-4 border-y border-gray-100/40">
+                        <td className="py-4 px-4 font-bold">{cust.phone}</td>
+                        <td className="py-4 px-4">
                           <span className="inline-block font-black px-2 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700 border border-blue-100">{cust.levelMembership}</span>
+                          <p className="text-[10px] text-gray-500 mt-1">Poin: <span className="font-bold">{cust.points}</span></p>
                         </td>
-                        <td className="py-4 px-4 border-y border-gray-100/40 max-w-[200px]">
-                          <p className="text-[10px] text-gray-600 font-semibold truncate">💬 {cust.interactionChat}</p>
-                          <p className="text-[10px] font-bold mt-1 text-red-500">⚠️ Komplain: {cust.complaint}</p>
+                        <td className="py-4 px-4 text-amber-600 font-bold text-[11px]">{cust.lastProduct}</td>
+                        <td className="py-4 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${cust.statusAktif === "Aktif" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{cust.statusAktif}</span>
                         </td>
-                        <td className="py-4 px-4 border-y border-gray-100/40">
-                          <p className="font-bold text-gray-700">Masuk: {cust.lastLogin}</p>
-                          <p className="text-[10px] text-gray-400">📱 {cust.device}</p>
-                        </td>
-                        <td className="py-4 px-4 border-y border-gray-100/40">
-                          <p className="font-bold text-blue-600">Sumber: {cust.userSource}</p>
-                        </td>
-                        <td className="py-4 px-4 text-right pr-6 rounded-r-xl border-r border-y border-gray-100/40">
-                          <p className="font-black text-gray-900 text-sm">{cust.spent}</p>
-                          <p className="text-[10px] text-amber-600 font-bold truncate">🚗 {cust.lastProduct}</p>
+                        <td className="py-4 px-4 rounded-r-xl">
+                          <div className="flex items-center justify-center gap-2">
+                            <button type="button" onClick={() => openEditMember(cust)} className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 border border-blue-100" title="Edit"><FaEdit size={11} /></button>
+                            {canDelete && (
+                              <button type="button" onClick={() => handleDeleteMember(cust.id)} disabled={deletingMemberId === cust.id} className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 border border-red-100 disabled:opacity-50" title="Hapus"><FaTrash size={11} /></button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -258,190 +377,154 @@ export default function Customers() {
           </div>
         )}
 
-        {/* SUB-MENU TABEL 2: REKAP ANTREAN BOOKING DATA MASUK */}
-        {activeTab === "booking-log" && (
-          <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-gray-100 shadow-sm mt-4 animate-fade-in">
-            <div className="mb-6 border-b border-gray-50 pb-4">
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">Log Logistik Antrean Booking Mobil</h3>
-              <p className="text-xs text-gray-400 mt-1">Daftar manifest pemesanan jadwal servis mekanik dari portal luar.</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-separate border-spacing-y-2 min-w-[700px]">
-                <thead>
-                  <tr className="text-gray-400 text-[11px] font-bold uppercase tracking-wider bg-gray-50/50">
-                    <th className="py-2.5 px-4 rounded-l-xl">ID Booking</th>
-                    <th className="py-2.5 px-4">Nama Pelanggan</th>
-                    <th className="py-2.5 px-4">Unit Mobil &amp; Plat</th>
-                    <th className="py-2.5 px-4">Rencana Kedatangan</th>
-                    <th className="py-2.5 px-4">Paket Servis</th>
-                    <th className="py-2.5 px-4 rounded-r-xl pr-4">Status Operational</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs text-gray-700">
-                  {bookingLogData.map((b) => (
-                    <tr key={b.id} className="bg-gray-50/50 hover:bg-gray-50 rounded-lg">
-                      <td className="py-3 px-4 font-mono font-bold text-amber-700 rounded-l-xl">{b.id}</td>
-                      <td className="py-3 px-4 font-black text-gray-800">{b.nama}</td>
-                      <td className="py-3 px-4 font-medium text-gray-600">{b.mobil}</td>
-                      <td className="py-3 px-4 text-gray-500 font-semibold">{b.tglJadwal}</td>
-                      <td className="py-3 px-4 font-bold text-slate-700">{b.paket}</td>
-                      <td className="py-3 px-4 rounded-r-xl pr-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${b.status === "Selesai" ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"}`}>{b.status}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* SUB-MENU TABEL 3: REKAP ADUAN KOMPLAIN TIKET MASUK */}
-        {activeTab === "complaint-log" && (
-          <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-gray-100 shadow-sm mt-4 animate-fade-in">
-            <div className="mb-6 border-b border-gray-50 pb-4">
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">Log Tiket Resolusi Komplain</h3>
-              <p className="text-xs text-gray-400 mt-1">Daftar keluhan masuk pasca-login untuk segera diselesaikan oleh layanan pelanggan.</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-separate border-spacing-y-2 min-w-[700px]">
-                <thead>
-                  <tr className="text-gray-400 text-[11px] font-bold uppercase tracking-wider bg-gray-50/50">
-                    <th className="py-2.5 px-4 rounded-l-xl">ID Tiket</th>
-                    <th className="py-2.5 px-4">Nama Pelanggan</th>
-                    <th className="py-2.5 px-4">Kategori Kendala</th>
-                    <th className="py-2.5 px-4">Isi Kronologi Aduan</th>
-                    <th className="py-2.5 px-4">Tanggal Masuk</th>
-                    <th className="py-2.5 px-4 rounded-r-xl pr-4">Status Resolusi</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs text-gray-700">
-                  {complaintLogData.map((c) => (
-                    <tr key={c.id} className="bg-gray-50/50 hover:bg-gray-50 rounded-lg">
-                      <td className="py-3 px-4 font-mono font-bold text-gray-500 rounded-l-xl">{c.id}</td>
-                      <td className="py-3 px-4 font-black text-gray-800">{c.nama}</td>
-                      <td className="py-3 px-4 text-amber-700 font-bold">{c.kategori}</td>
-                      <td className="py-3 px-4 text-gray-600 max-w-[250px] truncate">"{c.isi}"</td>
-                      <td className="py-3 px-4 text-gray-400 font-medium">{c.tglLapor}</td>
-                      <td className="py-3 px-4 rounded-r-xl pr-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${c.status === "Resolved" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}>{c.status}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* SUB-MENU TABEL 4: KELOLA DISKON & VOUCHER PROMO */}
+        {/* TAB: MANAGE PROMO */}
         {activeTab === "manage-promo" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4 animate-fade-in">
-            {/* SISI KIRI: FORM INPUT PROMO BARU */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+            {/* FORM PROMO */}
             <div className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm h-fit">
               <div className="mb-4">
-                <h3 className="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                  <FaTicketAlt className="text-[#DEE33E]" /> Buat Kode Promo Baru
-                </h3>
-                <p className="text-[11px] text-gray-400 mt-0.5">Tambah data diskon atau harga coret ke sistem database.</p>
+                <h3 className="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-2"><FaTicketAlt className="text-[#DEE33E]" /> Buat Kode Promo Baru</h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">Tambah diskon baru ke Supabase.</p>
               </div>
               <form onSubmit={handleAddPromoSubmit} className="space-y-3">
-                <input 
-                  type="text" name="code" required placeholder="KODE PROMO (Contoh: BENGKELGOMERDEKA)" 
-                  value={newPromo.code} onChange={handlePromoInputChange} 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs font-mono focus:outline-none focus:border-black uppercase" 
-                />
-                <input 
-                  type="text" name="name" required placeholder="Nama Promo (Contoh: Diskon Ganti Oli)" 
-                  value={newPromo.name} onChange={handlePromoInputChange} 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" 
-                />
+                <input type="text" name="code" required placeholder="KODE PROMO" value={newPromo.code} onChange={handlePromoInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs font-mono focus:outline-none focus:border-black uppercase" />
+                <input type="text" name="name" required placeholder="Nama Promo" value={newPromo.name} onChange={handlePromoInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
                 <div className="grid grid-cols-2 gap-2">
-                  <input 
-                    type="text" name="discount" required placeholder="Besar Diskon (%, Rp)" 
-                    value={newPromo.discount} onChange={handlePromoInputChange} 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" 
-                  />
-                  <input 
-                    type="date" name="expDate" required 
-                    value={newPromo.expDate} onChange={handlePromoInputChange} 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs text-gray-500 focus:outline-none focus:border-black" 
-                  />
+                  <input type="text" name="discount" required placeholder="Diskon (%, Rp)" value={newPromo.discount} onChange={handlePromoInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+                  <input type="date" name="expDate" required value={newPromo.expDate} onChange={handlePromoInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs text-gray-500 focus:outline-none focus:border-black" />
                 </div>
-                <select 
-                  name="type" value={newPromo.type} onChange={handlePromoInputChange} 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs text-gray-600 focus:outline-none cursor-pointer"
-                >
+                <select name="type" value={newPromo.type} onChange={handlePromoInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs text-gray-600 focus:outline-none cursor-pointer">
                   <option value="Kupon">Tipe Kupon</option>
                   <option value="Voucher">Tipe Voucher</option>
-                  <option value="Harga Coret">Harga Coret Khusus</option>
+                  <option value="Harga Coret">Harga Coret</option>
                 </select>
-                <button type="submit" className="w-full h-10 bg-[#DEE33E] text-black font-black text-[10px] rounded-xl shadow-sm uppercase tracking-wider mt-2 hover:bg-opacity-90 transition-all">
-                  Aktifkan Promo Baru
-                </button>
+                <button type="submit" className="w-full h-10 bg-[#DEE33E] text-black font-black text-[10px] rounded-xl shadow-sm uppercase tracking-wider mt-2 hover:bg-opacity-90">Aktifkan Promo Baru</button>
               </form>
             </div>
 
-            {/* SISI KANAN: TABEL LIST VOUCHER/DISKON YANG AKTIF */}
+            {/* PROMO TABLE */}
             <div className="lg:col-span-2 bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm overflow-x-auto">
-              <h3 className="text-xs font-black text-gray-800 uppercase tracking-wider mb-4">Tabel Manifest Promo &amp; Diskon</h3>
-              <table className="w-full text-left border-separate border-spacing-y-2">
-                <thead>
-                  <tr className="text-gray-400 text-[10px] uppercase font-bold tracking-wider">
-                    <th className="pb-2 pl-2">Kode</th>
-                    <th className="pb-2">Nama Program</th>
-                    <th className="pb-2">Potongan</th>
-                    <th className="pb-2">Berlaku S/D</th>
-                    <th className="pb-2 text-right pr-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs font-medium text-gray-700">
-                  {promoData.map((promo) => (
-                    <tr key={promo.id} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-xl">
-                      <td className="py-3 pl-3 font-mono font-bold text-blue-700 rounded-l-xl">{promo.code}</td>
-                      <td className="py-3 font-black text-gray-800">{promo.name}</td>
-                      <td className="py-3 font-extrabold text-red-500">{promo.discount}</td>
-                      <td className="py-3 text-gray-500">{promo.expDate}</td>
-                      <td className="py-3 text-right pr-3 rounded-r-xl">
-                        <span className="bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded text-[9px] uppercase tracking-tighter">Aktif</span>
-                      </td>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-black text-gray-800 uppercase tracking-wider">Daftar Promo &amp; Diskon Aktif</h3>
+                <button type="button" onClick={fetchPromos} className="text-[10px] px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100">Refresh</button>
+              </div>
+              {isLoadingPromos ? (
+                <p className="text-center text-gray-500 py-8 text-xs">Memuat data promo...</p>
+              ) : promoData.length === 0 ? (
+                <p className="text-center text-gray-500 py-8 text-xs">Belum ada promo terdaftar.</p>
+              ) : (
+                <table className="w-full text-left border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-gray-400 text-[10px] uppercase font-bold tracking-wider">
+                      <th className="pb-2 pl-2">Kode</th>
+                      <th className="pb-2">Nama</th>
+                      <th className="pb-2">Potongan</th>
+                      <th className="pb-2">Berlaku S/D</th>
+                      <th className="pb-2">Tipe</th>
+                      <th className="pb-2 text-center">Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="text-xs font-medium text-gray-700">
+                    {promoData.map((promo) => (
+                      <tr key={promo.id} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-xl">
+                        <td className="py-3 pl-3 font-mono font-bold text-blue-700 rounded-l-xl">{promo.code}</td>
+                        <td className="py-3 font-black text-gray-800">{promo.name}</td>
+                        <td className="py-3 font-extrabold text-red-500">{promo.discount}</td>
+                        <td className="py-3 text-gray-500">{promo.expDate}</td>
+                        <td className="py-3"><span className="bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded text-[9px] uppercase">{promo.type}</span></td>
+                        <td className="py-3 rounded-r-xl">
+                          <div className="flex items-center justify-center gap-2">
+                            <button type="button" onClick={() => openEditPromo(promo)} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 border border-blue-100" title="Edit"><FaEdit size={10} /></button>
+                            {canDelete && (
+                              <button type="button" onClick={() => handleDeletePromo(promo.id)} disabled={deletingPromoId === promo.id} className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-100 disabled:opacity-50" title="Hapus"><FaTrash size={10} /></button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         )}
-
       </Container>
 
-      {/* POP-UP FORM MODAL: TAMBAH PELANGGAN BARU (WALK-IN) */}
+      {/* MODAL: TAMBAH CUSTOMER */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-md rounded-[28px] p-6 shadow-2xl relative animate-fade-in">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-5 right-5 text-gray-400 hover:text-black transition-colors">
-              <FaTimes size={14} />
-            </button>
-            <div className="mb-6">
-              <h4 className="text-sm font-black text-gray-800 uppercase tracking-wider">Registrasi Pelanggan Manual</h4>
-              <p className="text-xs text-gray-400 mt-0.5">Entri data profil dan kendaraan pelanggan walk-in oleh Kasir.</p>
-            </div>
+          <div className="bg-white w-full max-w-md rounded-[28px] p-6 shadow-2xl relative">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-5 right-5 text-gray-400 hover:text-black"><FaTimes size={14} /></button>
+            <h4 className="text-sm font-black text-gray-800 uppercase tracking-wider mb-1">Registrasi Pelanggan Baru</h4>
+            <p className="text-xs text-gray-400 mb-5">Data akan tersimpan ke Supabase.</p>
             <form onSubmit={handleAddCustomerSubmit} className="space-y-4">
-              <input type="text" name="name" required placeholder="Nama Lengkap Pemilik" value={newCustomer.name} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
-              <input type="text" name="phone" required placeholder="Nomor WhatsApp (Aktif)" value={newCustomer.phone} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
-              <input type="email" name="email" required placeholder="Alamat Email" value={newCustomer.email} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+              <input type="text" name="name" required placeholder="Nama Lengkap" value={newCustomer.name} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+              <input type="text" name="phone" required placeholder="Nomor WhatsApp" value={newCustomer.phone} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+              <input type="email" name="email" required placeholder="Email" value={newCustomer.email} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+              <input type="text" name="address" placeholder="Alamat" value={newCustomer.address} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
               <div className="grid grid-cols-2 gap-3">
-                <input type="text" name="unitMobil" required placeholder="Tipe Mobil (Avanza/Jazz)" value={newCustomer.unitMobil} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
-                <input type="text" name="platNomor" required placeholder="Plat Nomor (BM XXXX AA)" value={newCustomer.platNomor} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+                <input type="text" name="unitMobil" required placeholder="Kendaraan" value={newCustomer.unitMobil} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+                <input type="text" name="platNomor" required placeholder="Plat Nomor" value={newCustomer.platNomor} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black uppercase" />
               </div>
-              <select name="levelMembership" value={newCustomer.levelMembership} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs text-gray-600 focus:outline-none">
-                <option value="Regular Member">Regular Member</option>
-                <option value="Gold Member">Gold Member</option>
-                <option value="Platinum Member">Platinum Member</option>
+              <input type="number" min="0" name="points" placeholder="Poin Loyalitas Awal" value={newCustomer.points} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+              <p className="text-[10px] text-gray-400 -mt-2">Tier otomatis berdasarkan poin: Regular(0), Bronze(100), Silver(250), Gold(500), Platinum(1000)</p>
+              <button type="submit" className="w-full h-11 bg-black text-white font-black text-xs rounded-xl uppercase tracking-widest hover:bg-gray-800">Daftarkan &amp; Simpan</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT MEMBER */}
+      {editMemberModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-md rounded-[28px] p-6 shadow-2xl relative">
+            <button onClick={() => setEditMemberModal(null)} className="absolute top-5 right-5 text-gray-400 hover:text-black"><FaTimes size={14} /></button>
+            <h4 className="text-sm font-black text-gray-800 uppercase tracking-wider mb-1">Edit Data Member</h4>
+            <p className="text-xs text-gray-400 mb-5">Perubahan tersimpan ke Supabase.</p>
+            <form onSubmit={handleEditMemberSubmit} className="space-y-4">
+              <input type="text" required placeholder="Nama Lengkap" value={editMemberForm.fullName} onChange={(e) => setEditMemberForm({ ...editMemberForm, fullName: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+              <input type="email" placeholder="Email" value={editMemberForm.email} onChange={(e) => setEditMemberForm({ ...editMemberForm, email: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 block mb-1">Tier</label>
+                <select value={editMemberForm.tier} onChange={(e) => setEditMemberForm({ ...editMemberForm, tier: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black">
+                  <option value="Bronze">Bronze</option>
+                  <option value="Silver">Silver</option>
+                  <option value="Gold">Gold</option>
+                  <option value="Platinum">Platinum</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4 border-t border-gray-50">
+                <button type="button" onClick={() => setEditMemberModal(null)} className="flex-1 px-4 py-2.5 text-xs text-gray-400 font-bold hover:text-gray-600">Batal</button>
+                <button type="submit" disabled={isEditingMember} className="flex-1 bg-red-600 text-white font-bold py-2.5 text-xs rounded-xl hover:bg-red-700 disabled:opacity-50">{isEditingMember ? "Menyimpan..." : "Simpan"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT PROMO */}
+      {editPromoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-md rounded-[28px] p-6 shadow-2xl relative">
+            <button onClick={() => setEditPromoModal(null)} className="absolute top-5 right-5 text-gray-400 hover:text-black"><FaTimes size={14} /></button>
+            <h4 className="text-sm font-black text-gray-800 uppercase tracking-wider mb-1">Edit Promo</h4>
+            <p className="text-xs text-gray-400 mb-5">Perubahan tersimpan ke Supabase.</p>
+            <form onSubmit={handleEditPromoSubmit} className="space-y-4">
+              <input type="text" required placeholder="Kode Promo" value={editPromoForm.code} onChange={(e) => setEditPromoForm({ ...editPromoForm, code: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs font-mono focus:outline-none focus:border-black uppercase" />
+              <input type="text" required placeholder="Nama Promo" value={editPromoForm.name} onChange={(e) => setEditPromoForm({ ...editPromoForm, name: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+              <div className="grid grid-cols-2 gap-2">
+                <input type="text" required placeholder="Diskon" value={editPromoForm.discount} onChange={(e) => setEditPromoForm({ ...editPromoForm, discount: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-black" />
+                <input type="date" value={editPromoForm.expDate} onChange={(e) => setEditPromoForm({ ...editPromoForm, expDate: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs text-gray-500 focus:outline-none focus:border-black" />
+              </div>
+              <select value={editPromoForm.type} onChange={(e) => setEditPromoForm({ ...editPromoForm, type: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs text-gray-600 focus:outline-none cursor-pointer">
+                <option value="Kupon">Kupon</option>
+                <option value="Voucher">Voucher</option>
+                <option value="Harga Coret">Harga Coret</option>
               </select>
-              <button type="submit" className="w-full h-11 bg-black text-white font-black text-xs rounded-xl shadow-sm uppercase tracking-widest mt-2 hover:bg-gray-800 transition-all">
-                Daftarkan &amp; Simpan
-              </button>
+              <div className="flex gap-3 pt-4 border-t border-gray-50">
+                <button type="button" onClick={() => setEditPromoModal(null)} className="flex-1 px-4 py-2.5 text-xs text-gray-400 font-bold hover:text-gray-600">Batal</button>
+                <button type="submit" disabled={isEditingPromo} className="flex-1 bg-[#DEE33E] text-black font-bold py-2.5 text-xs rounded-xl hover:bg-[#c2c72f] disabled:opacity-50">{isEditingPromo ? "Menyimpan..." : "Simpan"}</button>
+              </div>
             </form>
           </div>
         </div>
