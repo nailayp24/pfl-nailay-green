@@ -4,7 +4,7 @@ import { FaArrowLeft, FaUser, FaCar, FaCertificate, FaSave } from "react-icons/f
 import Container from "../components/Container";
 import PageHeader from "../components/PageHeader";
 import { customerAPI } from "../services/userAPI";
-import { MEMBERSHIP_TIERS, toPointNumber } from "../utils/membership";
+import { MEMBERSHIP_TIERS, getTierByPoints, toPointNumber } from "../utils/membership";
 
 export default function MemberDetail() {
   const { id } = useParams();
@@ -24,8 +24,8 @@ export default function MemberDetail() {
       name: apiMember.full_name || apiMember.fullName || apiMember.username || apiMember.name || "Unknown Member",
       email: apiMember.email || apiMember.email_address || "-",
       phone: apiMember.phone || apiMember.phone_number || apiMember.phoneNumber || "-",
-      levelMembership: apiMember.levelMembership || apiMember.membership_tier || apiMember.role || "Regular Member",
-      points: toPointNumber(apiMember.points || apiMember.loyalty_points || apiMember.reward_points || 0),
+      levelMembership: apiMember.levelMembership || apiMember.membership_tier || apiMember.tier || apiMember.role || "Regular Member",
+      points: toPointNumber(apiMember.points || apiMember.reward_points || apiMember.loyalty_points || 0),
       lastProduct: apiMember.lastProduct || apiMember.last_product || apiMember.vehicle || "Tidak ada data kendaraan",
       spent: apiMember.spent || "Rp 0",
       complaint: apiMember.complaint || apiMember.complaint_detail || "-",
@@ -44,9 +44,9 @@ export default function MemberDetail() {
         const apiMember = await customerAPI.getMemberById(id);
         if (apiMember) {
           const normalized = normalizeMember(apiMember);
-          const currentTier = normalized.levelMembership || "Bronze";
-          setMember({ ...normalized, levelMembership: currentTier });
-          setMembershipForm({ points: normalized.points, levelMembership: currentTier });
+          const computedTier = normalized.levelMembership !== "Regular Member" ? normalized.levelMembership : getTierByPoints(normalized.points);
+          setMember({ ...normalized, levelMembership: computedTier });
+          setMembershipForm({ points: normalized.points, levelMembership: computedTier });
           const [bookings, complaints] = await Promise.all([
             customerAPI.getMemberBookings(id),
             customerAPI.getMemberComplaints(id),
@@ -70,7 +70,7 @@ export default function MemberDetail() {
 
   const handleMembershipPointsChange = (e) => {
     const points = toPointNumber(e.target.value);
-    setMembershipForm({ points, levelMembership: membershipForm.levelMembership });
+    setMembershipForm({ points, levelMembership: getTierByPoints(points) });
   };
 
   const handleMembershipSave = async (e) => {
@@ -78,9 +78,10 @@ export default function MemberDetail() {
     setIsSavingMembership(true);
     setSaveMessage("");
 
-    const nextTier = membershipForm.levelMembership || "Bronze";
+    const nextTier = getTierByPoints(membershipForm.points);
     const payload = {
       tier: nextTier,
+      points: membershipForm.points,
     };
 
     try {

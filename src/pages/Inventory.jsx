@@ -17,6 +17,7 @@ export default function Inventory() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [formData, setFormData] = useState({
     nama_produk: "",
     harga: "",
@@ -51,6 +52,9 @@ export default function Inventory() {
     );
   }, [products, searchTerm]);
 
+  const [productsPage, setProductsPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 10;
+
   const formatCurrency = (value) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
@@ -58,6 +62,52 @@ export default function Inventory() {
     setEditMode(null);
     setFormData({ nama_produk: "", harga: "", stok: "", deskripsi: "" });
     setShowModal(true);
+  };
+
+  const seedDummyInventory = async () => {
+    if (!canEdit) return alert("Akses ditolak: hanya Owner/Kasir yang dapat menambah data.");
+    if (!window.confirm("Isi inventory dengan data dummy (akan menambahkan banyak item)?")) return;
+    setIsSeeding(true);
+    try {
+      const sample = [
+        { nama: "Oli Mesin Sintetis 1L", harga: 85000, stok: 120, deskripsi: "Oli mesin sintetis untuk motor matic dan bebek." },
+        { nama: "Filter Udara Universal", harga: 45000, stok: 80, deskripsi: "Filter udara kualitas OEM, pas untuk berbagai tipe motor." },
+        { nama: "Kampas Rem Depan", harga: 95000, stok: 60, deskripsi: "Kampas rem depan model standar, tahan lama." },
+        { nama: "Aki Kering 12V", harga: 320000, stok: 40, deskripsi: "Aki maintenance-free 12V, starter kuat." },
+        { nama: "Busi NGK Iridium", harga: 120000, stok: 75, deskripsi: "Busi iridium untuk performa dan efisiensi bahan bakar." },
+        { nama: "Rantai Motor 428H", harga: 220000, stok: 50, deskripsi: "Rantai penggerak standar, inklusif sambungan master." },
+        { nama: "Brake Fluid DOT4 250ml", harga: 65000, stok: 90, deskripsi: "Cairan rem DOT4, cocok untuk sistem hidrolik." },
+        { nama: "Lampu Depan Halogen H4", harga: 78000, stok: 30, deskripsi: "Lampu halogen H4 dengan daya tahan tinggi." },
+        { nama: "Sekering Kit 10pcs", harga: 15000, stok: 200, deskripsi: "Sekering cadangan untuk instalasi listrik kecil." },
+        { nama: "Spare Part Set Spooring", harga: 175000, stok: 25, deskripsi: "Set suku cadang untuk perbaikan spoiling dan balancing." },
+      ];
+
+      // Generate variations to create a larger dataset
+      const items = [];
+      for (let i = 0; i < 30; i++) {
+        const base = sample[i % sample.length];
+        items.push({
+          nama_produk: `${base.nama} ${Math.floor(100 + i)}`,
+          harga: base.harga + (i % 5) * 5000,
+          stok: Math.max(0, base.stok - (i % 12)),
+          deskripsi: `${base.deskripsi} (SKU: DMY-${1000 + i})`,
+        });
+      }
+
+      // Create items sequentially to avoid overwhelming the API and ensure remote writes
+      for (const it of items) {
+        // eslint-disable-next-line no-await-in-loop
+        await customerAPI.createPromoRemote(it);
+      }
+
+      alert(`Selesai menambahkan ${items.length} item dummy ke inventory.`);
+      fetchProducts();
+    } catch (err) {
+      console.error("Gagal menambahkan dummy inventory:", err);
+      alert("Gagal menambahkan data dummy. Periksa koneksi atau status Supabase.");
+    } finally {
+      setIsSeeding(false);
+    }
   };
 
   const openEditModal = (product) => {
@@ -127,12 +177,22 @@ export default function Inventory() {
           </p>
         </div>
         {canEdit && (
-          <button
-            onClick={openCreateModal}
-            className="bg-[#DEE33E] text-black px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-[#c2c72f] shadow-sm flex items-center gap-2 transition-all"
-          >
-            <FaPlus /> Tambah Produk
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={openCreateModal}
+              className="bg-[#DEE33E] text-black px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-[#c2c72f] shadow-sm flex items-center gap-2 transition-all"
+            >
+              <FaPlus /> Tambah Produk
+            </button>
+            <button
+              onClick={seedDummyInventory}
+              disabled={isSeeding}
+              className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 disabled:opacity-50"
+              title="Isi inventory dengan data dummy"
+            >
+              {isSeeding ? "Menambahkan..." : "Isi Dummy"}
+            </button>
+          </div>
         )}
       </div>
 
@@ -229,8 +289,15 @@ export default function Inventory() {
                     {searchTerm ? "Tidak ada produk yang cocok." : "Belum ada produk. Klik 'Tambah Produk' untuk menambah."}
                   </td>
                 </tr>
-              ) : (
-                filteredProducts.map((item) => (
+              ) : (() => {
+                const total = filteredProducts.length;
+                const pages = Math.max(1, Math.ceil(total / PRODUCTS_PER_PAGE));
+                const page = Math.min(Math.max(1, productsPage), pages);
+                const start = (page - 1) * PRODUCTS_PER_PAGE;
+                const slice = filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
+                return (
+                  <>
+                    {slice.map((item) => (
                   <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
                     <td className="py-4 px-4 font-mono font-bold text-gray-400">{item.id}</td>
                     <td className="py-4 px-4 font-extrabold text-gray-800">{item.nama_produk}</td>
@@ -270,8 +337,23 @@ export default function Inventory() {
                       </td>
                     )}
                   </tr>
-                ))
-              )}
+                    ))}
+                    <tr>
+                      <td colSpan={canEdit ? 6 : 5} className="py-3">
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <div>Menampilkan {Math.min(total, start + 1)}-{Math.min(total, start + slice.length)} dari {total} produk</div>
+                          <div className="flex items-center gap-2">
+                            <button disabled={page <= 1} onClick={() => setProductsPage((p) => Math.max(1, p - 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Prev</button>
+                            <span className="px-2">{`${page}/${pages}`}</span>
+                            <button disabled={page >= pages} onClick={() => setProductsPage((p) => Math.min(pages, p + 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Next</button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </>
+                );
+              })()
+              }
             </tbody>
           </table>
         </div>

@@ -24,6 +24,19 @@ export function getBookingRewardPoints(totalPrice) {
   return Math.max(10, Math.floor(toPointNumber(totalPrice) / 10000));
 }
 
+export function getTierByPoints(points) {
+  const safePoints = toPointNumber(points);
+  if (safePoints >= 1000) return "Platinum";
+  if (safePoints >= 500) return "Gold";
+  if (safePoints >= 250) return "Silver";
+  if (safePoints >= 100) return "Bronze";
+  return "Regular Member";
+}
+
+export function getPointsFromMember(member) {
+  return toPointNumber(member?.points ?? member?.reward_points ?? member?.loyalty_points ?? 0);
+}
+
 export function getRewardHistoryKey(memberId) {
   return `reward_history_${memberId || "guest"}`;
 }
@@ -38,4 +51,24 @@ export function readRewardHistory(memberId) {
 
 export function saveRewardHistory(memberId, history) {
   localStorage.setItem(getRewardHistoryKey(memberId), JSON.stringify(history));
+}
+
+export function getRewardBalance(memberId) {
+  const history = readRewardHistory(memberId);
+  return history.reduce((sum, entry) => sum + (Number(entry.points) || 0), 0);
+}
+
+export function addRewardHistoryEntry(memberId, entry) {
+  const history = readRewardHistory(memberId);
+  const nextEntry = {
+    id: entry.id || `${Date.now()}`,
+    date: entry.date || new Date().toISOString(),
+    title: entry.title || "Reward Activity",
+    type: entry.type || "redeem",
+    points: Number(entry.points) || 0,
+    notes: entry.notes || "",
+  };
+  const nextHistory = [nextEntry, ...history];
+  saveRewardHistory(memberId, nextHistory);
+  return nextHistory;
 }

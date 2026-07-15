@@ -1,10 +1,10 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { FaSearch, FaFilter, FaPlus, FaTimes, FaUserFriends, FaCalendarCheck, FaExclamationTriangle, FaBullhorn, FaEnvelope, FaWhatsapp, FaTicketAlt, FaTrash, FaEdit } from "react-icons/fa";
 import Container from "../components/Container";
 import PageHeader from "../components/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { customerAPI } from "../services/userAPI";
-import { toPointNumber } from "../utils/membership";
+import { getTierByPoints, toPointNumber } from "../utils/membership";
 
 export default function Customers() {
   const navigate = useNavigate();
@@ -27,9 +27,14 @@ export default function Customers() {
   const [customerData, setCustomerData] = useState([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
   const [promoData, setPromoData] = useState([]);
+  const [customerPage, setCustomerPage] = useState(1);
+  const CUSTOMER_PER_PAGE = 10;
+  const [promoPage, setPromoPage] = useState(1);
+  const PROMO_PER_PAGE = 5;
   const [isLoadingPromos, setIsLoadingPromos] = useState(false);
   const [deletingMemberId, setDeletingMemberId] = useState(null);
   const [deletingPromoId, setDeletingPromoId] = useState(null);
+  const [isSeedingPromos, setIsSeedingPromos] = useState(false);
 
   // Edit member modal
   const [editMemberModal, setEditMemberModal] = useState(null);
@@ -52,10 +57,10 @@ export default function Customers() {
     phone: member.phone || "-",
     email: member.email || "-",
     address: member.address || "-",
-    levelMembership: member.tier || "Bronze",
+    levelMembership: member.tier || member.levelMembership || member.membership_tier || "Bronze",
     statusAktif: "Aktif",
-    points: 0,
-    lastProduct: member.last_product || "-",
+    points: toPointNumber(member.points || member.reward_points || member.loyalty_points || 0),
+    lastProduct: member.last_product || member.vehicle || member.lastProduct || "-",
     userSource: member.user_source || "Database",
     promoStatus: "Tidak Ada Promo",
     regDate: member.created_at || "-",
@@ -74,20 +79,7 @@ export default function Customers() {
     };
   };
 
-  const fetchPromos = async () => {
-    setIsLoadingPromos(true);
-    try {
-      const apiPromos = await customerAPI.getAllPromos();
-      setPromoData(apiPromos.map(normalizePromo));
-    } catch (err) {
-      console.error("Gagal memuat data promo Supabase:", err);
-      setPromoData([]);
-    } finally {
-      setIsLoadingPromos(false);
-    }
-  };
-
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     setIsLoadingCustomers(true);
     try {
       const apiMembers = await customerAPI.getAllMembers();
@@ -98,12 +90,25 @@ export default function Customers() {
     } finally {
       setIsLoadingCustomers(false);
     }
-  };
+  }, []);
+
+  const fetchPromos = useCallback(async () => {
+    setIsLoadingPromos(true);
+    try {
+      const apiPromos = await customerAPI.getAllPromos();
+      setPromoData((apiPromos || []).map(normalizePromo));
+    } catch (err) {
+      console.error("Gagal memuat promo Supabase:", err);
+      setPromoData([]);
+    } finally {
+      setIsLoadingPromos(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchCustomers();
     fetchPromos();
-  }, []);
+  }, [fetchCustomers, fetchPromos]);
 
   // CRUD: Create Member
   const handleAddCustomerSubmit = async (e) => {
@@ -112,8 +117,13 @@ export default function Customers() {
     const payload = {
       fullName: newCustomer.name,
       email: newCustomer.email,
+      phone: newCustomer.phone,
+      address: newCustomer.address,
+      unitMobil: newCustomer.unitMobil,
+      platNomor: newCustomer.platNomor,
+      points: pointsValue,
       role: "Member",
-      tier: "Bronze",
+      tier: getTierByPoints(pointsValue),
     };
     try {
       const createdMember = await customerAPI.createMember(payload);
@@ -335,13 +345,20 @@ export default function Customers() {
                   <tbody className="text-xs text-gray-700">
                     {isLoadingCustomers ? (
                       <tr><td colSpan="6" className="py-8 text-center text-gray-500">Memuat data pelanggan...</td></tr>
-                    ) : customerData
-                      .filter((cust) => {
+                    ) : (() => {
                         const search = customerSearch.toLowerCase();
-                        return cust.name.toLowerCase().includes(search) || cust.email.toLowerCase().includes(search) || cust.phone.toLowerCase().includes(search);
-                      })
-                      .map((cust) => (
-                      <tr key={cust.id} className="bg-white hover:bg-gray-50 transition-all shadow-sm rounded-xl border border-gray-100/50">
+                        const visible = customerData.filter((cust) =>
+                          cust.name.toLowerCase().includes(search) || cust.email.toLowerCase().includes(search) || cust.phone.toLowerCase().includes(search)
+                        );
+                        const total = visible.length;
+                        const pages = Math.max(1, Math.ceil(total / CUSTOMER_PER_PAGE));
+                        const page = Math.min(Math.max(1, customerPage), pages);
+                        const start = (page - 1) * CUSTOMER_PER_PAGE;
+                        const slice = visible.slice(start, start + CUSTOMER_PER_PAGE);
+                        return (
+                          <>
+                            {slice.map((cust) => (
+                              <tr key={cust.id} className="bg-white hover:bg-gray-50 transition-all shadow-sm rounded-xl border border-gray-100/50">
                         <td className="py-4 px-4 rounded-l-xl">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center font-black text-gray-600">{cust.name.charAt(0)}</div>
@@ -369,7 +386,22 @@ export default function Customers() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                          ))}
+                          <tr>
+                            <td colSpan="6" className="py-3">
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <div>Menampilkan {Math.min(total, start + 1)}-{Math.min(total, start + slice.length)} dari {total} pelanggan</div>
+                                <div className="flex items-center gap-2">
+                                  <button disabled={page <= 1} onClick={() => setCustomerPage((p) => Math.max(1, p - 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Prev</button>
+                                  <span className="px-2">{`${page}/${pages}`}</span>
+                                  <button disabled={page >= pages} onClick={() => setCustomerPage((p) => Math.min(pages, p + 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Next</button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </>
+                      );
+                    })()}
                   </tbody>
                 </table>
               </div>
@@ -399,6 +431,34 @@ export default function Customers() {
                   <option value="Harga Coret">Harga Coret</option>
                 </select>
                 <button type="submit" className="w-full h-10 bg-[#DEE33E] text-black font-black text-[10px] rounded-xl shadow-sm uppercase tracking-wider mt-2 hover:bg-opacity-90">Aktifkan Promo Baru</button>
+                <button type="button" disabled={isSeedingPromos} onClick={async () => {
+                  if (!window.confirm('Isi promo dummy ke Supabase?')) return;
+                  setIsSeedingPromos(true);
+                  try {
+                    const samples = [
+                      { code: 'WELCOME10', name: 'Diskon Pembukaan 10%', discount: '10%', type: 'Kupon', exp: '2026-12-31' },
+                      { code: 'SERVICE50', name: 'Potongan Rp50.000 Service', discount: '50000', type: 'Harga Coret', exp: '2026-09-30' },
+                      { code: 'OTW20', name: 'Diskon 20% untuk Member', discount: '20%', type: 'Kupon', exp: '2026-11-30' },
+                    ];
+                    for (const p of samples) {
+                      const payload = {
+                        nama_produk: p.name,
+                        harga: parseFloat(p.discount) || 0,
+                        stok: 0,
+                        deskripsi: `${p.code} | ${p.type} | Exp: ${p.exp}`,
+                      };
+                      // eslint-disable-next-line no-await-in-loop
+                      await customerAPI.createPromoRemote(payload);
+                    }
+                    alert('Selesai menambahkan promo dummy ke Supabase.');
+                    fetchPromos();
+                  } catch (err) {
+                    console.error('Gagal menulis promo ke Supabase:', err);
+                    alert('Gagal menambahkan promo. Pastikan Supabase tersedia.');
+                  } finally {
+                    setIsSeedingPromos(false);
+                  }
+                }} className="w-full h-10 mt-2 border border-gray-200 bg-white text-gray-700 font-bold text-[10px] rounded-xl shadow-sm uppercase tracking-wider hover:bg-gray-50 disabled:opacity-50">{isSeedingPromos ? 'Menambahkan...' : 'Isi Dummy Promo (Supabase)'}</button>
               </form>
             </div>
 
@@ -413,6 +473,7 @@ export default function Customers() {
               ) : promoData.length === 0 ? (
                 <p className="text-center text-gray-500 py-8 text-xs">Belum ada promo terdaftar.</p>
               ) : (
+                <>
                 <table className="w-full text-left border-separate border-spacing-y-2">
                   <thead>
                     <tr className="text-gray-400 text-[10px] uppercase font-bold tracking-wider">
@@ -425,8 +486,16 @@ export default function Customers() {
                     </tr>
                   </thead>
                   <tbody className="text-xs font-medium text-gray-700">
-                    {promoData.map((promo) => (
-                      <tr key={promo.id} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-xl">
+                    {(() => {
+                      const total = promoData.length;
+                      const pages = Math.max(1, Math.ceil(total / PROMO_PER_PAGE));
+                      const page = Math.min(Math.max(1, promoPage), pages);
+                      const start = (page - 1) * PROMO_PER_PAGE;
+                      const slice = promoData.slice(start, start + PROMO_PER_PAGE);
+                      return (
+                        <>
+                          {slice.map((promo) => (
+                            <tr key={promo.id} className="bg-gray-50 hover:bg-gray-100 transition-colors rounded-xl">
                         <td className="py-3 pl-3 font-mono font-bold text-blue-700 rounded-l-xl">{promo.code}</td>
                         <td className="py-3 font-black text-gray-800">{promo.name}</td>
                         <td className="py-3 font-extrabold text-red-500">{promo.discount}</td>
@@ -441,9 +510,25 @@ export default function Customers() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                          ))}
+                          <tr>
+                            <td colSpan={6} className="py-3">
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <div>Menampilkan {Math.min(total, start + 1)}-{Math.min(total, start + slice.length)} dari {total} promo</div>
+                                <div className="flex items-center gap-2">
+                                  <button disabled={page <= 1} onClick={() => setPromoPage((p) => Math.max(1, p - 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Prev</button>
+                                  <span className="px-2">{`${page}/${pages}`}</span>
+                                  <button disabled={page >= pages} onClick={() => setPromoPage((p) => Math.min(pages, p + 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Next</button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </>
+                      );
+                    })()}
                   </tbody>
                 </table>
+                </>
               )}
             </div>
           </div>

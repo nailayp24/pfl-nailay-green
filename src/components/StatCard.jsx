@@ -1,6 +1,8 @@
 import Card from "./Card";
 
-export default function StatCard({ title, value, trend, icon: Icon, isNegative }) {
+export default function StatCard({ title, value, trend, icon, isNegative }) {
+  const Icon = icon;
+
   return (
     <Card className="flex items-center justify-between min-w-[280px] flex-1 font-outfit">
       <div className="space-y-1">

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { FaExclamationTriangle, FaClipboardList, FaSearch, FaFilter, FaTrash, FaEdit, FaTimes } from "react-icons/fa";
 import Container from "../components/Container";
 import PageHeader from "../components/PageHeader";
@@ -15,6 +15,8 @@ export default function AdminComplaintLog() {
 
   const [complaintLogData, setComplaintLogData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [complaintPage, setComplaintPage] = useState(1);
+  const COMPLAINTS_PER_PAGE = 10;
   const [statusFilter, setStatusFilter] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -36,7 +38,7 @@ export default function AdminComplaintLog() {
     status: item.status_resolusi || "pending",
   });
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     setIsLoading(true);
     setLoadError(false);
     try {
@@ -53,7 +55,7 @@ export default function AdminComplaintLog() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const handleComplaintStatusChange = async (complaintId, newStatus) => {
     setUpdatingComplaintId(complaintId);
@@ -123,7 +125,7 @@ export default function AdminComplaintLog() {
 
   useEffect(() => {
     fetchComplaints();
-  }, []);
+  }, [fetchComplaints]);
 
   const filteredComplaintLog = useMemo(() => {
     return complaintLogData.filter((item) => {
@@ -220,8 +222,15 @@ export default function AdminComplaintLog() {
                   <tr>
                     <td colSpan="7" className="py-8 text-center text-gray-500">Tidak ditemukan data komplain sesuai filter.</td>
                   </tr>
-                ) : (
-                  filteredComplaintLog.map((item) => (
+                ) : (() => {
+                  const total = filteredComplaintLog.length;
+                  const pages = Math.max(1, Math.ceil(total / COMPLAINTS_PER_PAGE));
+                  const page = Math.min(Math.max(1, complaintPage), pages);
+                  const start = (page - 1) * COMPLAINTS_PER_PAGE;
+                  const slice = filteredComplaintLog.slice(start, start + COMPLAINTS_PER_PAGE);
+                  return (
+                    <>
+                      {slice.map((item) => (
                     <tr key={item.id} className="bg-white hover:bg-gray-50 transition-all rounded-xl shadow-sm">
                       <td className="py-4 px-4 font-mono font-black text-gray-600 text-xs">{String(item.id).slice(0, 8)}</td>
                       <td className="py-4 px-4 font-bold text-gray-800">{item.nama}</td>
@@ -266,8 +275,22 @@ export default function AdminComplaintLog() {
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                      ))}
+                      <tr>
+                        <td colSpan="7" className="py-3">
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div>Menampilkan {Math.min(total, start + 1)}-{Math.min(total, start + slice.length)} dari {total} tiket</div>
+                            <div className="flex items-center gap-2">
+                              <button disabled={page <= 1} onClick={() => setComplaintPage((p) => Math.max(1, p - 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Prev</button>
+                              <span className="px-2">{`${page}/${pages}`}</span>
+                              <button disabled={page >= pages} onClick={() => setComplaintPage((p) => Math.min(pages, p + 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Next</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </>
+                  );
+                })()}
               </tbody>
             </table>
           </div>

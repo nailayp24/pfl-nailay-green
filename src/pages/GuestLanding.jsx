@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaCalendarCheck,
@@ -108,7 +108,7 @@ export default function GuestLanding() {
     type: promo.type || promo.promo_type || "promo",
   });
 
-  const fetchPromos = async () => {
+  const fetchPromos = useCallback(async () => {
     setIsLoadingPromos(true);
     try {
       const apiPromos = await customerAPI.getAllPromos();
@@ -119,13 +119,13 @@ export default function GuestLanding() {
     } finally {
       setIsLoadingPromos(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPromos();
     const promoInterval = setInterval(fetchPromos, 30000);
     return () => clearInterval(promoInterval);
-  }, []);
+  }, [fetchPromos]);
 
   const features = [
     {

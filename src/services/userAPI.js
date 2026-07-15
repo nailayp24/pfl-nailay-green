@@ -207,7 +207,7 @@ export const customerAPI = {
   },
 
   async updateMember(id, payload) {
-    const isMembershipPayload = "tier" in payload;
+    const isMembershipPayload = "tier" in payload || "points" in payload;
 
     if (isMembershipPayload) {
       return saveLocalMemberOverride(id, payload);
@@ -297,6 +297,19 @@ export const customerAPI = {
         markTableUnavailable("pesanan")
         return saveLocalRow(LOCAL_BOOKINGS_STORAGE_KEY, bookingData);
       }
+      throw error;
+    }
+  },
+
+  // Force write booking to Supabase without falling back to localStorage
+  async createBookingRemote(bookingData) {
+    try {
+      const response = await axios.post(BOOKINGS_URL, bookingData, {
+        headers: { ...headers, Prefer: "return=representation" },
+      });
+      return (response.data && response.data[0]) || null;
+    } catch (error) {
+      logSupabaseError("Gagal menulis booking ke Supabase (remote)", error);
       throw error;
     }
   },
@@ -431,6 +444,21 @@ export const customerAPI = {
         markTableUnavailable("produk")
         return saveLocalRow(LOCAL_PROMOS_STORAGE_KEY, promoData);
       }
+      throw error;
+    }
+  },
+
+  // Force write directly to Supabase; do NOT fallback to localStorage.
+  // Throws on any error so callers can decide how to handle availability.
+  async createPromoRemote(promoData) {
+    try {
+      const response = await axios.post(PROMOS_URL, promoData, {
+        headers: { ...headers, Prefer: "return=representation" },
+      });
+      return (response.data && response.data[0]) || null;
+    } catch (error) {
+      logSupabaseError("Gagal menulis promo ke Supabase (remote)", error);
+      // Surface the error to caller — do not fallback locally.
       throw error;
     }
   },

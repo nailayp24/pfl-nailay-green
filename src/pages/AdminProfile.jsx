@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCamera, FaSave, FaEdit } from "react-icons/fa";
 import Container from "../components/Container";
 import PageHeader from "../components/PageHeader";
@@ -18,11 +18,7 @@ export default function AdminProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setIsLoading(true);
     try {
       const users = await customerAPI.getAllMembers();
@@ -43,7 +39,11 @@ export default function AdminProfile() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId, userRole, userSession]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleSave = async () => {
     setIsSaving(true);

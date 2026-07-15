@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { FaHistory } from "react-icons/fa";
 import { customerAPI } from "../../services/userAPI";
-import { getBookingRewardPoints } from "../../utils/membership";
+import { getBookingRewardPoints, readRewardHistory } from "../../utils/membership";
 
 export default function MemberHistory() {
   const [historyData, setHistoryData] = useState([]);
-  const [pointHistory, setPointHistory] = useState([]);
+  const [rewardHistory, setRewardHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -21,25 +21,33 @@ export default function MemberHistory() {
         }
 
         const bookings = await customerAPI.getMemberBookings(memberId);
+        const storedRewards = readRewardHistory(memberId);
         if (bookings.length > 0) {
           const normalizedBookings = bookings.map((booking) => ({
             id: booking.id || booking.booking_id || booking.uuid,
-            service: booking.service || booking.paket || booking.package || "Layanan",
-            date: booking.date || booking.tglJadwal || booking.booking_date || booking.created_at,
+            service: booking.jenis_servis || booking.service || booking.paket || booking.package || "Layanan",
+            date: booking.tanggal_booking || booking.date || booking.tglJadwal || booking.booking_date || booking.created_at,
             status: booking.status || booking.booking_status || "Terjadwal",
-            totalPrice: booking.total_price || booking.totalPrice || booking.price || 0,
+            totalPrice: booking.total_harga || booking.totalPrice || booking.price || 0,
           }));
           setHistoryData(normalizedBookings);
-          setPointHistory(normalizedBookings.map((booking) => ({
+
+          const generatedPoints = normalizedBookings.map((booking) => ({
             id: `booking-${booking.id}`,
             title: `Booking ${booking.service}`,
             date: booking.date,
             points: getBookingRewardPoints(booking.totalPrice),
             type: "earn",
-          })));
+            notes: `Booking servis: ${booking.service}`,
+          }));
+
+          const existingRewardIds = new Set(storedRewards.map((reward) => reward.id));
+          const missingGeneratedPoints = generatedPoints.filter((entry) => !existingRewardIds.has(entry.id));
+
+          setRewardHistory([...storedRewards, ...missingGeneratedPoints].sort((a, b) => new Date(b.date) - new Date(a.date)));
         } else {
           setHistoryData([]);
-          setPointHistory([]);
+          setRewardHistory(storedRewards || []);
         }
       } catch (error) {
         console.error("Gagal memuat riwayat member:", error);
@@ -89,14 +97,19 @@ export default function MemberHistory() {
         <h2 className="text-sm font-black text-gray-800 uppercase tracking-wider mb-4">Riwayat Poin & Reward</h2>
         {isLoading ? (
           <div className="py-8 text-center text-gray-500">Memuat riwayat poin...</div>
-        ) : pointHistory.length === 0 ? (
+        ) : rewardHistory.length === 0 ? (
           <div className="py-8 text-center text-gray-500">Belum ada aktivitas poin.</div>
         ) : (
-          pointHistory.map((item) => (
+          rewardHistory.map((item) => (
             <div key={item.id} className="border rounded-xl p-4 mb-3 flex items-center justify-between gap-4">
               <div>
                 <h3 className="font-bold">{item.title}</h3>
-                <p className="text-sm text-gray-500">{item.date}</p>
+                <p className="text-sm text-gray-500">{new Date(item.date).toLocaleDateString("id-ID", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}</p>
+                {item.notes && <p className="text-xs text-gray-400 mt-1">{item.notes}</p>}
               </div>
               <span className={`px-3 py-1 rounded-lg text-sm font-bold ${item.points >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                 {item.points >= 0 ? "+" : ""}{item.points} poin

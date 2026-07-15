@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaCalendarCheck, FaTag } from "react-icons/fa";
 import { customerAPI } from "../../services/userAPI";
-import { getDiscountByTier } from "../../utils/membership";
+import { getDiscountByTier, getBookingRewardPoints, addRewardHistoryEntry, getTierByPoints, toPointNumber } from "../../utils/membership";
 
 export default function MemberBooking() {
   const [formData, setFormData] = useState({
@@ -81,7 +81,28 @@ export default function MemberBooking() {
         throw new Error("Booking tidak berhasil tersimpan di Supabase.");
       }
 
-      setSubmitMessage(`Booking berhasil. Total pembayaran ${formatCurrency(finalPrice)}.`);
+      const earnedPoints = getBookingRewardPoints(finalPrice);
+      if (memberId) {
+        addRewardHistoryEntry(memberId, {
+          title: `Booking ${formData.service}`,
+          type: "earn",
+          points: earnedPoints,
+          notes: `Booking servis: ${formData.service}`,
+        });
+
+        const currentPoints = toPointNumber(session.points || session.reward_points || session.loyalty_points || 0);
+        const nextPoints = currentPoints + earnedPoints;
+        const nextTier = getTierByPoints(nextPoints);
+
+        customerAPI.updateMember(memberId, { points: nextPoints, tier: nextTier }).catch((err) => {
+          console.warn("Gagal memperbarui poin member setelah booking:", err);
+        });
+
+        const updatedSession = { ...session, points: nextPoints, tier: nextTier };
+        localStorage.setItem("user_session", JSON.stringify(updatedSession));
+      }
+
+      setSubmitMessage(`Booking berhasil. Total pembayaran ${formatCurrency(finalPrice)}. Anda mendapatkan ${earnedPoints} poin reward.`);
       setFormData({ vehicle: "", service: "", date: "", complaint: "" });
     } catch (error) {
       console.error("Gagal membuat booking:", error);

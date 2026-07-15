@@ -42,7 +42,7 @@ export default function MemberComplaints() {
     }
   }, []);
 
-  const handleSubitComplaint = async (e) => {
+  const handleSubmitComplaint = async (e) => {
     e.preventDefault();
     if (!memberData) return;
 
@@ -88,7 +88,7 @@ export default function MemberComplaints() {
           </div>
         </div>
 
-        <form onSubmit={handleSubitComplaint} className="space-y-4">
+        <form onSubmit={handleSubmitComplaint} className="space-y-4">
           {submitMessage && (
             <div className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl p-3">
               {submitMessage}
@@ -131,8 +131,8 @@ export default function MemberComplaints() {
                     <p className="text-xs text-gray-400 uppercase tracking-wider">{complaint.category}</p>
                     <h3 className="font-bold text-gray-900 mt-1">{complaint.message}</h3>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${complaint.status === "Resolved" ? "bg-green-50 text-green-700" : complaint.status === "Pending" ? "bg-yellow-50 text-amber-600" : "bg-red-50 text-red-700"}`}>
-                    {complaint.status}
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${complaint.status === "resolved" ? "bg-green-50 text-green-700" : complaint.status === "pending" ? "bg-yellow-50 text-amber-600" : "bg-red-50 text-red-700"}`}>
+                    {complaint.status?.charAt(0).toUpperCase() + complaint.status?.slice(1)}
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-500 mt-3">Dikirim pada: {complaint.createdAt}</p>

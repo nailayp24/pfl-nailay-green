@@ -40,11 +40,6 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Close mobile sidebar on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [window.location.pathname]);
-
   const handleLogout = () => {
     localStorage.removeItem("user_session");
     navigate("/login");

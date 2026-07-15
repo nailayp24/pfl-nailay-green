@@ -4,17 +4,22 @@ import { customerAPI } from "../../services/userAPI";
 import {
   REWARD_CATALOG,
   getDiscountByTier,
+  addRewardHistoryEntry,
+  getTierByPoints,
+  readRewardHistory,
 } from "../../utils/membership";
 
 export default function MemberDashboard() {
   const [memberData, setMemberData] = useState(null);
   const [sessionData, setSessionData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [bookingCount, setBookingCount] = useState(0);
-  const [complaintCount, setComplaintCount] = useState(0);
   const [promoCards, setPromoCards] = useState([]);
   const [isPromosLoading, setIsPromosLoading] = useState(true);
   const [rewardMessage, setRewardMessage] = useState("");
+  const [rewardHistory, setRewardHistory] = useState([]);
+  const [pointsEarned, setPointsEarned] = useState(0);
+  const [pointBalance, setPointBalance] = useState(0);
+  const [unitMobil, setUnitMobil] = useState("Belum ada unit terdaftar");
+  const [totalTransaksi, setTotalTransaksi] = useState("Rp 0");
 
   const normalizePromo = (promo) => {
     const desc = promo.deskripsi || "";
@@ -34,33 +39,57 @@ export default function MemberDashboard() {
       const session = JSON.parse(localStorage.getItem("user_session"));
       setSessionData(session);
       if (!session) {
-        setIsLoading(false);
         return;
       }
 
       const memberId = session.id || session.user_id || session.uuid;
       if (!memberId) {
-        setIsLoading(false);
         return;
       }
 
       try {
-        const [memberRecord, bookings, complaints] = await Promise.all([
+        const [memberRecord, bookings] = await Promise.all([
           customerAPI.getMemberById(memberId),
           customerAPI.getMemberBookings(memberId),
-          customerAPI.getMemberComplaints(memberId),
         ]);
 
         if (memberRecord) {
           setMemberData(memberRecord);
         }
 
-        setBookingCount(bookings.length);
-        setComplaintCount(complaints.length);
+        // bookingCount and complaintCount are not rendered in this view
+
+        const total = bookings.reduce((sum, booking) => {
+          const amount = Number(booking.total_harga || booking.totalPrice || booking.price || 0);
+          return sum + (Number.isFinite(amount) ? amount : 0);
+        }, 0);
+        setTotalTransaksi(
+          new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            maximumFractionDigits: 0,
+          }).format(total)
+        );
+
+        setUnitMobil(
+          memberRecord?.kendaraan || memberRecord?.vehicle || memberRecord?.last_product || bookings[0]?.kendaraan || bookings[0]?.vehicle || "Belum ada unit terdaftar"
+        );
+
+        const savedHistory = readRewardHistory(memberId);
+        const localBalanceDelta = savedHistory.reduce((sum, entry) => sum + (Number(entry.points) || 0), 0);
+        const accountPoints = Number(memberRecord?.points || memberRecord?.reward_points || memberRecord?.loyalty_points || 0);
+        const balance = accountPoints + localBalanceDelta;
+        const earnedPoints = savedHistory
+          .filter((entry) => Number(entry.points) > 0)
+          .reduce((sum, entry) => sum + Number(entry.points), 0);
+
+        setRewardHistory(savedHistory);
+        setPointBalance(balance);
+        setPointsEarned(earnedPoints);
       } catch (error) {
         console.error("Gagal memuat dashboard member:", error);
       } finally {
-        setIsLoading(false);
+        // no-op: isLoading removed
       }
     };
 
@@ -82,13 +111,45 @@ export default function MemberDashboard() {
 
   const profile = memberData || sessionData || {};
   const membershipTier = profile?.tier || "Bronze";
-  const discountRate = 0; // No discount system in current DB
-  const unitMobil = "Belum ada unit terdaftar";
-  const totalTransaksi = "Rp 0";
+  const discountRate = getDiscountByTier(membershipTier);
   const memberId = profile?.id;
 
   const handleRewardRedeem = async (reward) => {
-    setRewardMessage("Sistem reward belum tersedia. Fitur akan segera hadir!");
+    if (!memberId) {
+      setRewardMessage("Silakan login ulang untuk menggunakan reward.");
+      return;
+    }
+
+    const requiredPoints = Number(reward.cost) || 0;
+    if (pointBalance < requiredPoints) {
+      setRewardMessage(`Poin tidak mencukupi. Anda membutuhkan ${requiredPoints} poin untuk klaim '${reward.title}'.`);
+      return;
+    }
+
+    const nextHistory = addRewardHistoryEntry(memberId, {
+      title: reward.title,
+      type: "redeem",
+      points: -requiredPoints,
+      notes: reward.value,
+    });
+
+    const localDelta = nextHistory.reduce((sum, entry) => sum + (Number(entry.points) || 0), 0);
+    const accountPoints = Number(profile?.points || profile?.reward_points || profile?.loyalty_points || 0);
+    const nextBalance = accountPoints + localDelta;
+    const nextPoints = accountPoints - requiredPoints;
+    const nextTier = getTierByPoints(nextPoints);
+
+    customerAPI.updateMember(memberId, { points: nextPoints, tier: nextTier }).catch((err) => {
+      console.warn("Gagal menyimpan pengurangan poin reward:", err);
+    });
+
+    const updatedSession = { ...sessionData, points: nextPoints, tier: nextTier };
+    localStorage.setItem("user_session", JSON.stringify(updatedSession));
+
+    setRewardHistory(nextHistory);
+    setPointBalance(nextBalance);
+    setPointsEarned(nextHistory.filter((entry) => Number(entry.points) > 0).reduce((sum, entry) => sum + Number(entry.points), 0));
+    setRewardMessage(`Reward '${reward.title}' berhasil diklaim. Sisa poin Anda ${nextBalance}.`);
   };
 
   return (
@@ -107,6 +168,7 @@ export default function MemberDashboard() {
             <span className="inline-block px-3 py-1 bg-[#DEE33E] text-black font-black text-xs rounded-xl uppercase tracking-wider shadow-sm mb-2">{membershipTier}</span>
             <p className="text-xs text-gray-500 font-medium">ID Pelanggan: <span className="font-mono font-bold text-gray-700">{memberData?.id || "BG-000"}</span></p>
             <p className="text-[10px] text-gray-500 mt-1">Tier: <span className="font-bold text-gray-700 uppercase">{membershipTier}</span></p>
+            <p className="text-[10px] text-gray-500 mt-1">Diskon tier: <span className="font-bold text-gray-700">{discountRate}%</span></p>
           </div>
           <div className="text-left sm:text-right">
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Referral Code Anda</p>
@@ -121,26 +183,56 @@ export default function MemberDashboard() {
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider flex items-center gap-2"><FaGift className="text-[#9FA324]" /> Reward Redemption</h4>
             <p className="text-[11px] text-gray-500 mt-1">Tukar poin loyalitas dengan benefit servis.</p>
           </div>
-          <span className="text-xs font-black text-gray-800">Tier: {membershipTier}</span>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-wider text-gray-400">Poin Tersedia</p>
+            <p className="text-lg font-black text-gray-900">{pointBalance} poin</p>
+            <p className="text-[10px] text-gray-500">Poin dari booking: {pointsEarned}</p>
+          </div>
         </div>
         {rewardMessage && <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs font-bold text-gray-600">{rewardMessage}</div>}
         <div className="grid gap-4 md:grid-cols-3">
-          {REWARD_CATALOG.map((reward) => (
-            <div key={reward.id} className="rounded-3xl border border-gray-100 bg-gray-50 p-5">
-              <p className="text-[10px] uppercase tracking-wider text-gray-500">{reward.cost} poin</p>
-              <h3 className="mt-2 text-sm font-black text-gray-900">{reward.title}</h3>
-              <p className="mt-2 text-xs text-gray-500">{reward.value}</p>
-              <button
-                type="button"
-                onClick={() => handleRewardRedeem(reward)}
-                disabled={false}
-                className="mt-4 w-full rounded-xl bg-black px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white disabled:bg-gray-200 disabled:text-gray-400"
-              >
-                Klaim Reward
-              </button>
-            </div>
-          ))}
+          {REWARD_CATALOG.map((reward) => {
+            const requiredPoints = Number(reward.cost) || 0;
+            return (
+              <div key={reward.id} className="rounded-3xl border border-gray-100 bg-gray-50 p-5">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500">{reward.cost} poin</p>
+                <h3 className="mt-2 text-sm font-black text-gray-900">{reward.title}</h3>
+                <p className="mt-2 text-xs text-gray-500">{reward.value}</p>
+                <button
+                  type="button"
+                  onClick={() => handleRewardRedeem(reward)}
+                  disabled={pointBalance < requiredPoints}
+                  className="mt-4 w-full rounded-xl bg-black px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white disabled:bg-gray-200 disabled:text-gray-400"
+                >
+                  {pointBalance < requiredPoints ? "Poin Tidak Cukup" : "Klaim Reward"}
+                </button>
+              </div>
+            );
+          })}
         </div>
+      </div>
+      <div className="bg-white border border-gray-100 rounded-[24px] shadow-sm p-6">
+        <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-4">Riwayat Poin</h4>
+        {rewardHistory.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+            Belum ada transaksi poin.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {rewardHistory.map((entry) => (
+              <div key={entry.id} className="rounded-3xl border border-gray-100 bg-gray-50 p-4 flex justify-between gap-4">
+                <div>
+                  <p className="text-sm font-black text-gray-900">{entry.title}</p>
+                  <p className="text-[10px] text-gray-500 mt-1">{new Date(entry.date).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}</p>
+                  {entry.notes && <p className="text-[10px] text-gray-400 mt-1">{entry.notes}</p>}
+                </div>
+                <span className={`text-[10px] font-black px-3 py-1 rounded-full ${entry.points >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {entry.points >= 0 ? "+" : ""}{entry.points} poin
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -160,6 +252,7 @@ export default function MemberDashboard() {
           <div className="p-4 bg-gray-50 rounded-2xl border flex justify-between items-center">
             <div>
               <p className="text-lg font-black text-gray-900">{totalTransaksi}</p>
+              <p className="text-[10px] text-gray-500 mt-1">Total transaksi dari booking Anda.</p>
             </div>
           </div>
         </div>

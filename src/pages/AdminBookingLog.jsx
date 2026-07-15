@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { FaCalendarCheck, FaClipboardList, FaSearch, FaFilter, FaTrash, FaEdit, FaTimes } from "react-icons/fa";
 import Container from "../components/Container";
 import PageHeader from "../components/PageHeader";
@@ -15,6 +15,8 @@ export default function AdminBookingLog() {
 
   const [bookingLogData, setBookingLogData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [bookingPage, setBookingPage] = useState(1);
+  const BOOKING_PER_PAGE = 10;
   const [statusFilter, setStatusFilter] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -40,7 +42,7 @@ export default function AdminBookingLog() {
     totalHarga: parseFloat(item.total_harga) || 0,
   });
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setIsLoading(true);
     setLoadError(false);
     try {
@@ -57,7 +59,7 @@ export default function AdminBookingLog() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const handleBookingStatusChange = async (bookingId, newStatus) => {
     setUpdatingBookingId(bookingId);
@@ -148,7 +150,7 @@ export default function AdminBookingLog() {
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   const filteredBookingLog = useMemo(() => {
     return bookingLogData.filter((item) => {
@@ -251,8 +253,15 @@ export default function AdminBookingLog() {
                   <tr>
                     <td colSpan="8" className="py-8 text-center text-gray-500">Tidak ditemukan data booking sesuai filter.</td>
                   </tr>
-                ) : (
-                  filteredBookingLog.map((item) => (
+                ) : (() => {
+                  const total = filteredBookingLog.length;
+                  const pages = Math.max(1, Math.ceil(total / BOOKING_PER_PAGE));
+                  const page = Math.min(Math.max(1, bookingPage), pages);
+                  const start = (page - 1) * BOOKING_PER_PAGE;
+                  const slice = filteredBookingLog.slice(start, start + BOOKING_PER_PAGE);
+                  return (
+                    <>
+                      {slice.map((item) => (
                     <tr key={item.id} className="bg-white hover:bg-gray-50 transition-all rounded-xl shadow-sm">
                       <td className="py-4 px-4 font-mono font-black text-amber-700 text-xs">{String(item.id).slice(0, 8)}</td>
                       <td className="py-4 px-4 font-bold text-gray-800">{item.nama}</td>
@@ -298,8 +307,22 @@ export default function AdminBookingLog() {
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                      ))}
+                      <tr>
+                        <td colSpan="8" className="py-3">
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div>Menampilkan {Math.min(total, start + 1)}-{Math.min(total, start + slice.length)} dari {total} booking</div>
+                            <div className="flex items-center gap-2">
+                              <button disabled={page <= 1} onClick={() => setBookingPage((p) => Math.max(1, p - 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Prev</button>
+                                  <span className="px-2">{`${page}/${pages}`}</span>
+                              <button disabled={page >= pages} onClick={() => setBookingPage((p) => Math.min(pages, p + 1))} className="px-3 py-1 rounded-xl border text-xs bg-white disabled:opacity-50">Next</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </>
+                  );
+                })()}
               </tbody>
             </table>
           </div>
