@@ -102,8 +102,19 @@ export default function GuestLanding() {
   };
 
   const normalizePromo = (promo) => ({
-    title: promo.name || promo.title || promo.code || "Promo Tanpa Judul",
-    desc: promo.description || promo.desc || `Diskon ${promo.discount || "-"} sampai ${promo.exp_date || promo.expDate || "-"}`,
+    title:
+      promo.nama_produk ||
+      promo.name ||
+      promo.title ||
+      promo.code ||
+      promo.description ||
+      promo.desc ||
+      "Promo Eksklusif Member",
+    desc:
+      promo.deskripsi ||
+      promo.description ||
+      promo.desc ||
+      `Diskon ${promo.discount || "-"} sampai ${promo.exp_date || promo.expDate || "-"}`,
     action: "Login untuk Klaim",
     type: promo.type || promo.promo_type || "promo",
   });
@@ -112,7 +123,7 @@ export default function GuestLanding() {
     setIsLoadingPromos(true);
     try {
       const apiPromos = await customerAPI.getAllPromos();
-      setPromoCards(apiPromos.map(normalizePromo));
+      setPromoCards((apiPromos || []).map(normalizePromo).slice(0, 6));
     } catch (error) {
       console.error("Gagal memuat promo untuk GuestLanding:", error);
       setPromoCards([]);
